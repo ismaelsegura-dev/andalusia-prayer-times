@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-serif: 'Times New Roman', Times, serif;
+  --font-mono: 'Courier Prime', 'Courier New', Courier, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-black font-sans antialiased;
+  }
+
+  * {
+    @apply border-black;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
