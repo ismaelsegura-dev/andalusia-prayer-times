@@ -45,3 +45,54 @@ export const HIJRI_MONTHS = [
   "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
   "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"
 ];
+
+export const getHijriMonthStart = (
+  year: number, 
+  month: number, 
+  validatedMonths: Record<string, string>
+): Date => {
+  const key = `${year}-${month.toString().padStart(2, '0')}`;
+  if (validatedMonths[key]) {
+    return new Date(validatedMonths[key]);
+  }
+  
+  // Fallback estimation if not validated
+  // This is a very rough estimation for the sake of the UI
+  // 1 Ramadan 1445 was 2024-03-11
+  const baseDate = new Date('2024-03-11');
+  const baseYear = 1445;
+  const baseMonth = 9;
+  
+  const monthDiff = (year - baseYear) * 12 + (month - baseMonth);
+  const estimatedDays = monthDiff * 29.53059;
+  
+  const result = new Date(baseDate);
+  result.setDate(result.getDate() + Math.round(estimatedDays));
+  return result;
+};
+
+export const getHijriMonthLength = (
+  year: number, 
+  month: number, 
+  validatedMonths: Record<string, string>
+): number => {
+  const currentKey = `${year}-${month.toString().padStart(2, '0')}`;
+  
+  // Check next month's start in validatedMonths
+  let nextMonth = month + 1;
+  let nextYear = year;
+  if (nextMonth > 12) {
+    nextMonth = 1;
+    nextYear = year + 1;
+  }
+  const nextKey = `${nextYear}-${nextMonth.toString().padStart(2, '0')}`;
+  
+  if (validatedMonths[currentKey] && validatedMonths[nextKey]) {
+    const start = new Date(validatedMonths[currentKey]);
+    const nextStart = new Date(validatedMonths[nextKey]);
+    return Math.round((nextStart.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  }
+  
+  // Default to 30 if not fully validated forward
+  return 30;
+};

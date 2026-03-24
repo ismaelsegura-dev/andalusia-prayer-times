@@ -9,10 +9,10 @@ interface AppState {
   
   selectedCityId: string;
   setSelectedCityId: (id: string) => void;
-  selectedMonth: number;
-  setSelectedMonth: (m: number) => void;
-  selectedYear: number;
-  setSelectedYear: (y: number) => void;
+  selectedHijriMonth: number;
+  setSelectedHijriMonth: (m: number) => void;
+  selectedHijriYear: number;
+  setSelectedHijriYear: (y: number) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -28,10 +28,10 @@ export const useStore = create<AppState>()(
 
       selectedCityId: 'granada', 
       setSelectedCityId: (id: string) => set({ selectedCityId: id }),
-      selectedMonth: new Date().getMonth() + 1,
-      setSelectedMonth: (m: number) => set({ selectedMonth: m }),
-      selectedYear: new Date().getFullYear(),
-      setSelectedYear: (y: number) => set({ selectedYear: y }),
+      selectedHijriMonth: 9, // Initial fallback
+      setSelectedHijriMonth: (m: number) => set({ selectedHijriMonth: m }),
+      selectedHijriYear: 1445, // Initial fallback
+      setSelectedHijriYear: (y: number) => set({ selectedHijriYear: y }),
     }),
     {
       name: 'andalusia-prayer-storage',

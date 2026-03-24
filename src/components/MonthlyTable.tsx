@@ -5,21 +5,23 @@ import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CITIES } from '../lib/cities';
 import { generateHighFidelityPDF } from '../lib/pdfGenerator';
+import { HIJRI_MONTHS, getHijriMonthStart, getHijriMonthLength } from '../lib/lunar-calendar';
 
-const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
 
 const MonthlyTable: React.FC = () => {
-  const { selectedCityId, selectedMonth, selectedYear } = useStore();
+  const { 
+    selectedCityId, 
+    selectedHijriMonth, 
+    selectedHijriYear,
+    validatedMonths
+  } = useStore();
   const [isGenerating, setIsGenerating] = useState(false);
   
   const city = CITIES[selectedCityId];
   if (!city) return null;
 
-  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-  const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+  const startDate = getHijriMonthStart(selectedHijriYear, selectedHijriMonth, validatedMonths);
+  const daysInMonth = getHijriMonthLength(selectedHijriYear, selectedHijriMonth, validatedMonths);
 
   return (
     <div className="flex flex-col h-full border-4 border-black bg-white shadow-[8px_8px_0_0_#000]">
@@ -30,11 +32,11 @@ const MonthlyTable: React.FC = () => {
             TABLA<br/>MENSUAL
           </h2>
           <span className="font-mono text-sm font-bold px-4 py-2 bg-black text-white uppercase tracking-widest">
-            {MONTHS[selectedMonth-1]} {selectedYear}
+            {HIJRI_MONTHS[selectedHijriMonth-1]} {selectedHijriYear}
           </span>
         </div>
         <button 
-          onClick={() => generateHighFidelityPDF(selectedCityId, selectedMonth, selectedYear, setIsGenerating)}
+          onClick={() => generateHighFidelityPDF(selectedCityId, selectedHijriMonth, selectedHijriYear, setIsGenerating)}
           disabled={isGenerating}
           className="font-mono text-xs font-bold uppercase tracking-widest border-2 border-black px-6 py-3 hover:bg-black hover:text-white transition-colors bg-white shadow-[4px_4px_0_0_#000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -64,7 +66,8 @@ const MonthlyTable: React.FC = () => {
                 <tr key={i} className="border-b-2 border-gray-200 hover:bg-gray-100 transition-colors last:border-b-0 group">
                   <td className="p-4 border-r-2 border-gray-200 bg-gray-50 font-bold text-left group-hover:bg-black group-hover:text-white transition-colors w-1/4">
                     <span className="opacity-50 mr-2 text-xs">{format(d, 'EEEE', { locale: es }).slice(0,3)}</span>
-                    {format(d, 'dd/MM')}
+                    {i + 1} {HIJRI_MONTHS[selectedHijriMonth-1].slice(0,3)}
+                    <span className="ml-2 opacity-50 text-[10px]">({format(d, 'dd/MM')})</span>
                   </td>
                   <td className="p-4 border-r border-gray-200 font-bold">{p.fajr}</td>
                   <td className="p-4 border-r border-gray-200 text-gray-400">{p.shuruq}</td>

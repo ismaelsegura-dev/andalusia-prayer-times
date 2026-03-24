@@ -2,22 +2,26 @@ import React, { useState } from 'react';
 import { useStore } from '../store';
 import { CITIES } from '../lib/cities';
 import { generateHighFidelityPDF } from '../lib/pdfGenerator';
-
-const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
+import { HIJRI_MONTHS, getValidatedLunarDate } from '../lib/lunar-calendar';
 
 const TaqwimSelector: React.FC = () => {
   const { 
     selectedCityId, setSelectedCityId,
-    selectedMonth, setSelectedMonth,
-    selectedYear, setSelectedYear
+    selectedHijriMonth, setSelectedHijriMonth,
+    selectedHijriYear, setSelectedHijriYear,
+    validatedMonths
   } = useStore();
 
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i + 1); // allow 1 year future, 3 past
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Initialize with current Hijri date if not set
+  React.useEffect(() => {
+    const current = getValidatedLunarDate(new Date(), validatedMonths);
+    setSelectedHijriMonth(current.month);
+    setSelectedHijriYear(current.year);
+  }, []);
+
+  const years = [1445, 1446, 1447, 1448];
 
   return (
     <div className="border-4 border-black p-6 md:p-8 bg-white shadow-[8px_8px_0_0_#000] mb-8 relative z-20">
@@ -50,15 +54,15 @@ const TaqwimSelector: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-6">
             <div className="flex flex-col gap-2 w-full sm:w-56">
               <label className="font-mono text-xs font-bold uppercase tracking-widest text-gray-500">
-                MES GREGORIANO
+                MES HIJRI
               </label>
               <div className="relative">
                 <select 
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  value={selectedHijriMonth}
+                  onChange={(e) => setSelectedHijriMonth(parseInt(e.target.value))}
                   className="w-full border-4 border-black p-4 font-mono text-xl font-bold uppercase appearance-none bg-white cursor-pointer focus:outline-none focus:bg-gray-50"
                 >
-                  {MONTHS.map((m, i) => (
+                  {HIJRI_MONTHS.map((m, i) => (
                      <option key={i+1} value={i+1}>{m}</option>
                   ))}
                 </select>
@@ -70,12 +74,12 @@ const TaqwimSelector: React.FC = () => {
 
             <div className="flex flex-col gap-2 w-full sm:w-40">
               <label className="font-mono text-xs font-bold uppercase tracking-widest text-gray-500">
-                AÑO
+                AÑO HIJRI
               </label>
               <div className="relative">
                 <select 
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  value={selectedHijriYear}
+                  onChange={(e) => setSelectedHijriYear(parseInt(e.target.value))}
                   className="w-full border-4 border-black p-4 font-mono text-xl font-bold uppercase appearance-none bg-white cursor-pointer focus:outline-none focus:bg-gray-50"
                 >
                   {years.map(y => (
@@ -93,7 +97,7 @@ const TaqwimSelector: React.FC = () => {
         {/* Generate Button Wrapper */}
         <div className="w-full xl:w-auto flex-shrink-0">
           <button 
-            onClick={() => generateHighFidelityPDF(selectedCityId, selectedMonth, selectedYear, setIsGenerating)}
+            onClick={() => generateHighFidelityPDF(selectedCityId, selectedHijriMonth, selectedHijriYear, setIsGenerating)}
             disabled={isGenerating}
             className="w-full xl:w-auto font-mono text-sm md:text-base font-bold uppercase tracking-widest border-2 border-black px-8 py-4 bg-black text-white hover:bg-white hover:text-black transition-colors shadow-[4px_4px_0_0_#D1D5DB] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-50 disabled:cursor-not-allowed h-[60px] flex items-center justify-center cursor-pointer"
           >

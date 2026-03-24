@@ -4,11 +4,8 @@ import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { calcularHorariosOracion } from './prayerTimesEngine';
 import { CITIES } from './cities';
-
-const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
+import { HIJRI_MONTHS, getHijriMonthStart, getHijriMonthLength } from './lunar-calendar';
+import { useStore } from '../store';
 
 export const fetchLocalImageAsBase64 = async (url: string): Promise<string | null> => {
   return new Promise((resolve) => {
@@ -42,17 +39,19 @@ export const hexToRgb = (hex: string): [number, number, number] => {
 
 export const generateHighFidelityPDF = async (
   cityId: string, 
-  selectedMonth: number, 
-  selectedYear: number, 
+  selectedHijriMonth: number, 
+  selectedHijriYear: number, 
   setIsGenerating: (v: boolean) => void
 ) => {
   const city = CITIES[cityId];
   if (!city) return;
 
+  const { validatedMonths } = useStore.getState();
+
   setIsGenerating(true);
   try {
-    const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-    const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+    const startDate = getHijriMonthStart(selectedHijriYear, selectedHijriMonth, validatedMonths);
+    const daysInMonth = getHijriMonthLength(selectedHijriYear, selectedHijriMonth, validatedMonths);
 
     const doc = new jsPDF('p', 'mm', 'a4');
     const w = doc.internal.pageSize.getWidth();
@@ -85,7 +84,7 @@ export const generateHighFidelityPDF = async (
     doc.setFont('times', 'bold');
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(14);
-    doc.text(`HORARIOS DE REZO — ${MONTHS[selectedMonth-1].toUpperCase()} ${selectedYear}`, w/2, 48, { align: 'center' });
+    doc.text(`HORARIOS DE REZO — ${HIJRI_MONTHS[selectedHijriMonth-1].toUpperCase()} ${selectedHijriYear}`, w/2, 48, { align: 'center' });
     
     doc.setFont('courier', 'normal');
     doc.setFontSize(8);
@@ -98,7 +97,7 @@ export const generateHighFidelityPDF = async (
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d).local;
       tableData.push([
-        format(d, 'EEEE, dd', { locale: es }).toUpperCase(),
+        `${i + 1} ${HIJRI_MONTHS[selectedHijriMonth-1].toUpperCase()} (${format(d, 'dd/MM', { locale: es })})`,
         p.fajr,
         p.shuruq,
         p.dhuhr,
@@ -152,7 +151,7 @@ export const generateHighFidelityPDF = async (
     doc.setTextColor(150, 150, 150);
     doc.text('Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18° / 17°', w/2, finalY + 18, { align: 'center' });
 
-    doc.save(`TAQWIM_${city.id}_${selectedYear}_${selectedMonth.toString().padStart(2,'0')}.pdf`);
+    doc.save(`TAQWIM_${city.id}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.pdf`);
   } catch (e) {
     console.error(e);
     alert('Error generando el PDF. Revise la consola.');
