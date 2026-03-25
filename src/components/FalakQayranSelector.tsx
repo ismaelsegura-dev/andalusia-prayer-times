@@ -14,14 +14,18 @@ const FalakQayranSelector: React.FC = () => {
 
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Initialize with current Hijri date if not set
+  // Always detect the current Hijri date on every fresh load
   React.useEffect(() => {
     const current = getValidatedLunarDate(new Date(), validatedMonths);
     setSelectedHijriMonth(current.month);
     setSelectedHijriYear(current.year);
+  // intentionally empty deps — run once on mount to set today's Hijri date
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const years = [1445, 1446, 1447, 1448];
+  // Current Hijri date — used to lock future months
+  const todayHijri = getValidatedLunarDate(new Date(), validatedMonths);
+  const years = [1448, 1447, 1446, 1445]; // newest first
 
   return (
     <div className="border-4 border-black p-6 md:p-8 bg-white shadow-[8px_8px_0_0_#000] mb-8 relative z-20">
@@ -62,9 +66,17 @@ const FalakQayranSelector: React.FC = () => {
                   onChange={(e) => setSelectedHijriMonth(parseInt(e.target.value))}
                   className="w-full border-4 border-black p-4 font-mono text-xl font-bold uppercase appearance-none bg-white cursor-pointer focus:outline-none focus:bg-gray-50"
                 >
-                  {HIJRI_MONTHS.map((m, i) => (
-                     <option key={i+1} value={i+1}>{m}</option>
-                  ))}
+                  {HIJRI_MONTHS.map((m, i) => {
+                    const monthNum = i + 1;
+                    const isFuture =
+                      selectedHijriYear > todayHijri.year ||
+                      (selectedHijriYear === todayHijri.year && monthNum > todayHijri.month);
+                    return (
+                      <option key={monthNum} value={monthNum} disabled={isFuture}>
+                        {m}{isFuture ? ' 🔒' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black font-bold">
                   ▼
@@ -82,9 +94,14 @@ const FalakQayranSelector: React.FC = () => {
                   onChange={(e) => setSelectedHijriYear(parseInt(e.target.value))}
                   className="w-full border-4 border-black p-4 font-mono text-xl font-bold uppercase appearance-none bg-white cursor-pointer focus:outline-none focus:bg-gray-50"
                 >
-                  {years.map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
+                  {years.map(y => {
+                    const isFutureYear = y > todayHijri.year;
+                    return (
+                      <option key={y} value={y} disabled={isFutureYear}>
+                        {y}{isFutureYear ? ' 🔒' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-black font-bold">
                   ▼

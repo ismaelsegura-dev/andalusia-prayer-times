@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
     { name: 'isha', time: parseTime(localTimes.isha) },
   ];
 
-  let nextPrayerName = 'none';
+  let nextPrayerName = '';
   let nextPrayerTime: Date | null = null;
 
   for (const p of schedule) {
@@ -47,7 +47,23 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  let countdown = '';
+  // If all prayers for today have passed, compute tomorrow's Fajr
+  if (!nextPrayerTime) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowPrayers = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, tomorrow);
+    const tFajrStr = tomorrowPrayers.local.fajr;
+    if (tFajrStr && !tFajrStr.startsWith('No')) {
+      const [h, m] = tFajrStr.split(':').map(Number);
+      const fajrTomorrow = new Date(tomorrow);
+      fajrTomorrow.setHours(h, m, 0, 0);
+      nextPrayerName = 'fajr';
+      nextPrayerTime = fajrTomorrow;
+    }
+  }
+
+  let countdown = '--:--:--';
+  let isUrgent = false;
   if (nextPrayerTime) {
     const diff = nextPrayerTime.getTime() - now.getTime();
     if (diff > 0) {
@@ -55,21 +71,34 @@ const Dashboard: React.FC = () => {
       const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const s = Math.floor((diff % (1000 * 60)) / 1000);
       countdown = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      isUrgent = diff < 60 * 60 * 1000; // < 1 hour → amber
     }
   }
+
+  const nextPrayerDisplayTime = nextPrayerTime
+    ? `${nextPrayerTime.getHours().toString().padStart(2,'0')}:${nextPrayerTime.getMinutes().toString().padStart(2,'0')}`
+    : '';
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-full items-stretch">
       {/* Date & Location Header - Takes left half on large screens */}
       <div className="border-4 border-black bg-white shadow-[8px_8px_0_0_#000] flex-1 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px] p-8" style={{ backgroundColor: city.col_pri }}>
-        <p className="font-mono text-sm font-bold tracking-widest text-white opacity-90 mb-4 z-10 text-center uppercase">
-          {city.nombre_es} // PRÓXIMO REZO //
+        <p className="font-mono text-sm font-bold tracking-widest text-white opacity-90 mb-2 z-10 text-center uppercase">
+          {city.nombre_es} // PRÓXIMO REZO
         </p>
-        <h3 className="font-serif text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter mb-6 z-10 leading-none text-white text-center">
-          {nextPrayerName !== 'none' ? nextPrayerName : 'MAÑANA'}
+        <h3 className="font-serif text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-2 z-10 leading-none text-white text-center">
+          {nextPrayerName ? nextPrayerName.toUpperCase() : 'CALCULANDO'}
         </h3>
-        <div className="font-mono text-5xl md:text-6xl font-black tracking-widest z-10 text-center" style={{ color: city.col_acc }}>
-          {countdown || '--:--:--'}
+        {nextPrayerDisplayTime && (
+          <p className="font-mono text-2xl font-bold tracking-widest z-10 text-center text-white opacity-80 mb-4">
+            {nextPrayerDisplayTime}
+          </p>
+        )}
+        <div
+          className="font-mono text-4xl md:text-5xl font-black tracking-widest z-10 text-center transition-colors"
+          style={{ color: isUrgent ? '#F59E0B' : city.col_acc }}
+        >
+          {countdown}
         </div>
       </div>
 

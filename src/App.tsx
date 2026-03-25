@@ -14,7 +14,7 @@ const AppContent = () => {
       <header className="p-6 md:p-8 flex justify-between items-start md:items-end border-b-4 border-black shrink-0 relative overflow-hidden bg-white z-10">
         <div>
           <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-black leading-none tracking-tighter">
-            PRECISIÓN<br />ANDALUZA
+            Falak Qayrān
           </h1>
           <p className="mt-2 font-mono text-xs md:text-sm font-bold tracking-widest text-gray-500">
             MOTOR CÁLCULO SOBERANO // [MALIKI]
