@@ -4,7 +4,7 @@ import { CITIES } from '../lib/cities';
 import { generateHighFidelityPDF } from '../lib/pdfGenerator';
 import { HIJRI_MONTHS, getValidatedLunarDate } from '../lib/lunar-calendar';
 
-const TaqwimSelector: React.FC = () => {
+const FalakQayranSelector: React.FC = () => {
   const { 
     selectedCityId, setSelectedCityId,
     selectedHijriMonth, setSelectedHijriMonth,
@@ -109,4 +109,4 @@ const TaqwimSelector: React.FC = () => {
   );
 };
 
-export default TaqwimSelector;
+export default FalakQayranSelector;

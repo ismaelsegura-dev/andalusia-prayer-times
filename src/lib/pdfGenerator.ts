@@ -151,7 +151,7 @@ export const generateHighFidelityPDF = async (
     doc.setTextColor(150, 150, 150);
     doc.text('Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18° / 17°', w/2, finalY + 18, { align: 'center' });
 
-    doc.save(`TAQWIM_${city.id}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.pdf`);
+    doc.save(`FALAK_QAYRAN_${city.id}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.pdf`);
   } catch (e) {
     console.error(e);
     alert('Error generando el PDF. Revise la consola.');

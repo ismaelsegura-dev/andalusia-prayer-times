@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StoreProvider } from './store';
-import TaqwimSelector from './components/TaqwimSelector';
+import FalakQayranSelector from './components/FalakQayranSelector';
 import Dashboard from './components/Dashboard';
 import MonthlyTable from './components/MonthlyTable';
 import AdminPanel from './components/AdminPanel';
@@ -37,7 +37,7 @@ const AppContent = () => {
           </div>
         ) : (
           <div className="max-w-7xl mx-auto">
-            <TaqwimSelector />
+            <FalakQayranSelector />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <div className="lg:col-span-12">
                 <Dashboard />
