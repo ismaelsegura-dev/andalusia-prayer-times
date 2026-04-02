@@ -219,7 +219,7 @@ function calcularHorariosOracion(lat, lng, alt, date) {
   //
   // Refracción atmosférica estándar en el horizonte: +0.5667°
   // Esta hace que el sol sea visible aunque geométricamente esté bajo el horizonte
-  const refraccion = 0.5667; // Grados de refracción en el horizonte
+  const refraccion = 0.8333; // 34' refracción + 16' semidiámetro solar // Grados de refracción en el horizonte
   const elevHorizonte = -(refraccion + altitudCorr); // Horizonte corregido
 
   const elevFajr = -18.0;  // Crepúsculo astronómico (ángulo Fajr)
@@ -277,21 +277,21 @@ function calcularHorariosOracion(lat, lng, alt, date) {
   return {
     // ─ Horas en UTC (para servidores, APIs, cálculos internos) ─
     utc: {
-      fajr:    fajrUTC    !== null ? decimalHoursToHHMM(fajrUTC)    : "No calculable (polar)",
-      shuruq:  shuruqUTC  !== null ? decimalHoursToHHMM(shuruqUTC)  : "No calculable (polar)",
-      dhuhr:   decimalHoursToHHMM(dhuhrUTC),
-      asr:     asrUTC     !== null ? decimalHoursToHHMM(asrUTC)     : "No calculable (polar)",
+      fajr: fajrUTC !== null ? decimalHoursToHHMM(fajrUTC) : "No calculable (polar)",
+      shuruq: shuruqUTC !== null ? decimalHoursToHHMM(shuruqUTC) : "No calculable (polar)",
+      dhuhr: decimalHoursToHHMM(dhuhrUTC),
+      asr: asrUTC !== null ? decimalHoursToHHMM(asrUTC) : "No calculable (polar)",
       maghrib: maghribConMargenUTC !== null ? decimalHoursToHHMM(maghribConMargenUTC) : "No calculable (polar)",
-      isha:    ishaUTC    !== null ? decimalHoursToHHMM(ishaUTC)    : "No calculable (polar)",
+      isha: ishaUTC !== null ? decimalHoursToHHMM(ishaUTC) : "No calculable (polar)",
     },
     // ─ Horas en hora local del sistema que ejecuta el código ─
     local: {
-      fajr:    fajrUTC    !== null ? decimalHoursToHHMM(aHoraLocal(fajrUTC))    : "No calculable (polar)",
-      shuruq:  shuruqUTC  !== null ? decimalHoursToHHMM(aHoraLocal(shuruqUTC))  : "No calculable (polar)",
-      dhuhr:   decimalHoursToHHMM(aHoraLocal(dhuhrUTC)),
-      asr:     asrUTC     !== null ? decimalHoursToHHMM(aHoraLocal(asrUTC))     : "No calculable (polar)",
+      fajr: fajrUTC !== null ? decimalHoursToHHMM(aHoraLocal(fajrUTC)) : "No calculable (polar)",
+      shuruq: shuruqUTC !== null ? decimalHoursToHHMM(aHoraLocal(shuruqUTC)) : "No calculable (polar)",
+      dhuhr: decimalHoursToHHMM(aHoraLocal(dhuhrUTC)),
+      asr: asrUTC !== null ? decimalHoursToHHMM(aHoraLocal(asrUTC)) : "No calculable (polar)",
       maghrib: maghribConMargenUTC !== null ? decimalHoursToHHMM(aHoraLocal(maghribConMargenUTC)) : "No calculable (polar)",
-      isha:    ishaUTC    !== null ? decimalHoursToHHMM(aHoraLocal(ishaUTC))    : "No calculable (polar)",
+      isha: ishaUTC !== null ? decimalHoursToHHMM(aHoraLocal(ishaUTC)) : "No calculable (polar)",
     },
     // ─ Metadatos del cálculo (útil para depuración y auditoría) ─
     meta: {
