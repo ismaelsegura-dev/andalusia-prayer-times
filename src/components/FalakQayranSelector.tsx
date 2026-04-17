@@ -13,6 +13,7 @@ const FalakQayranSelector: React.FC = () => {
   } = useStore();
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   // Always detect the current Hijri date on every fresh load
   React.useEffect(() => {
@@ -44,7 +45,7 @@ const FalakQayranSelector: React.FC = () => {
               >
                 {Object.values(CITIES).map(city => (
                   <option key={city.id} value={city.id}>
-                    Mezquita de {city.nombre_es}
+                    {city.nombre_es.toLowerCase().startsWith('mezquita') ? city.nombre_es : `Mezquita de ${city.nombre_es}`}
                   </option>
                 ))}
               </select>
@@ -114,11 +115,19 @@ const FalakQayranSelector: React.FC = () => {
         {/* Generate Button Wrapper */}
         <div className="w-full xl:w-auto flex-shrink-0">
           <button 
-            onClick={() => generateHighFidelityPDF(selectedCityId, selectedHijriMonth, selectedHijriYear, setIsGenerating)}
+            onClick={async () => {
+              await generateHighFidelityPDF(selectedCityId, selectedHijriMonth, selectedHijriYear, setIsGenerating);
+              setDownloadSuccess(true);
+              setTimeout(() => setDownloadSuccess(false), 2000);
+            }}
             disabled={isGenerating}
-            className="w-full xl:w-auto font-mono text-sm md:text-base font-bold uppercase tracking-widest border-2 border-black px-8 py-4 bg-black text-white hover:bg-white hover:text-black transition-colors shadow-[4px_4px_0_0_#D1D5DB] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-50 disabled:cursor-not-allowed h-[60px] flex items-center justify-center cursor-pointer"
+            className={`w-full xl:w-auto font-mono text-sm md:text-base font-bold uppercase tracking-widest border-2 px-8 py-4 transition-all h-[60px] flex items-center justify-center cursor-pointer ${
+              downloadSuccess 
+              ? 'border-black bg-white text-black shadow-none translate-x-[4px] translate-y-[4px]' 
+              : 'border-black bg-black text-white hover:bg-white hover:text-black shadow-[4px_4px_0_0_#D1D5DB] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {isGenerating ? '[ GENERANDO... ]' : '[ DESCARGAR PDF ]'}
+            {isGenerating ? '[ GENERANDO... ]' : downloadSuccess ? '[ ✔ ÉXITO ]' : '[ DESCARGAR PDF ]'}
           </button>
         </div>
       </div>

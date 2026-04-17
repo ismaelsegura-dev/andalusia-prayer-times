@@ -55,41 +55,39 @@ export const generateHighFidelityPDF = async (
 
     const doc = new jsPDF('p', 'mm', 'a4');
     const w = doc.internal.pageSize.getWidth();
+    const h = doc.internal.pageSize.getHeight();
     
     const rgbPri = hexToRgb(city.col_pri);
-    const rgbSec = hexToRgb(city.col_sec);
-    const rgbAcc = hexToRgb(city.col_acc);
 
-    // Header Banner Background
-    doc.setFillColor(rgbPri[0], rgbPri[1], rgbPri[2]);
-    doc.rect(0, 0, w, 40, 'F');
+    const margin = 15;
     
-    // Bottom banner line
-    doc.setFillColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
-    doc.rect(0, 40, w, 2, 'F');
+    // Brutalist Outer Border
+    doc.setDrawColor(0, 0, 0);       
+    doc.setLineWidth(1.5);
+    doc.rect(margin, margin, w - margin*2, h - margin*2, 'S');
 
-    // Attempt to load and place Logo
-    const logoB64 = await fetchLocalImageAsBase64(city.logo);
-    if (logoB64) {
-      // Assume the logo is roughly a header graphic and we center it.
-      doc.addImage(logoB64, 'PNG', w/2 - 40, 4, 80, 28, undefined, 'FAST');
-    } else {
-      doc.setFont('times', 'bold');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
-      doc.text(city.nombre_es.toUpperCase(), w/2, 22, { align: 'center' });
-    }
-
-    // Title
-    doc.setFont('times', 'bold');
+    // Branding Header
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(14);
-    doc.text(`HORARIOS DE REZO — ${HIJRI_MONTHS[selectedHijriMonth-1].toUpperCase()} ${selectedHijriYear}`, w/2, 48, { align: 'center' });
+    doc.setFontSize(22);
+    const cityTitle = city.nombre_es.toUpperCase();
+    doc.text(cityTitle, w/2, margin + 12, { align: 'center' });
+
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(10);
+    doc.text(`FALAK QAYRAN // HORARIOS DE REZO`, w/2, margin + 18, { align: 'center' });
+
+    // Decorative/Brutalist separator
+    doc.setLineWidth(1.5);
+    doc.line(margin, margin + 21, w - margin, margin + 21);
     
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Basado en coordenadas exactas: ${city.coords.lat.toFixed(4)}, ${city.coords.lng.toFixed(4)}`, w/2, 53, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text(`${HIJRI_MONTHS[selectedHijriMonth-1].toUpperCase()} ${selectedHijriYear}`, w/2, margin + 27, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    const geoText = `LAT: ${city.coords.lat.toFixed(4)}° // LNG: ${city.coords.lng.toFixed(4)}° // ALT: ${city.coords.alt}m`;
+    doc.setFontSize(7.5);
+    doc.text(geoText, w/2, margin + 31, { align: 'center' });
 
     // Table Data
     const tableData = [];
@@ -97,7 +95,7 @@ export const generateHighFidelityPDF = async (
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d).local;
       tableData.push([
-        `${i + 1} ${HIJRI_MONTHS[selectedHijriMonth-1].toUpperCase()} (${format(d, 'dd/MM', { locale: es })})`,
+        `${i + 1} ${HIJRI_MONTHS[selectedHijriMonth-1].substring(0,3).toUpperCase()} [${format(d, 'dd/MM', { locale: es })}]`,
         p.fajr,
         p.shuruq,
         p.dhuhr,
@@ -108,50 +106,71 @@ export const generateHighFidelityPDF = async (
     }
 
     autoTable(doc, {
-      head: [['FECHA', 'FAJR', 'AMANECER', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA']],
+      head: [['FECHA', 'FAJR', 'SHURUQ', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA']],
       body: tableData,
-      startY: 57,
-      styles: { font: 'courier', fontSize: 8, halign: 'center', cellPadding: 1, minCellHeight: 5.5 },
+      startY: margin + 34,
+      theme: 'grid', // Brutalist grid theme
+      styles: { 
+        font: 'courier', 
+        fontSize: 8.5, 
+        halign: 'center', 
+        cellPadding: 1.2, 
+        textColor: [0, 0, 0],
+        lineColor: [0, 0, 0],
+        lineWidth: 0.5
+      },
       headStyles: { 
-        fillColor: rgbPri, 
+        fillColor: rgbPri, // Use the priority color as background for header
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        minCellHeight: 7
+        halign: 'center'
       },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
+      alternateRowStyles: { fillColor: [225, 225, 225] },
       columnStyles: {
-        0: { halign: 'left', fontStyle: 'bold', minCellWidth: 35 },
-        5: { fontStyle: 'bold', textColor: rgbSec } // Maghrib highlight
+        0: { halign: 'left', fontStyle: 'bold', fillColor: [210, 210, 210] }
       },
-      margin: { top: 57, bottom: 25 },
+      margin: { top: 35, bottom: 25, left: margin + 2, right: margin + 2 },
       pageBreak: 'avoid'
     });
 
     // Footer
-    const finalY = (doc as any).lastAutoTable.finalY + 8;
+    const finalY = (doc as any).lastAutoTable.finalY + 5;
     
-    // Decorative line
-    doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
-    doc.setLineWidth(0.5);
-    doc.line(15, finalY, w - 15, finalY);
+    // Bottom Section Boundary
+    doc.setDrawColor(0,0,0);
+    doc.setLineWidth(1);
+    doc.line(margin + 5, finalY, w - margin - 5, finalY);
 
-    doc.setFontSize(7.5);
-    doc.setTextColor(50, 50, 50);
-    doc.text(city.geo, w/2, finalY + 5, { align: 'center' });
-    
-    if (city.contacto) {
-      doc.text(city.contacto, w/2, finalY + 9, { align: 'center' });
+    if (city.fundacion) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(city.fundacion.toUpperCase(), w/2, finalY + 5, { align: 'center' });
     }
-    if (city.web) {
-      doc.setTextColor(rgbSec[0], rgbSec[1], rgbSec[2]);
-      doc.text(city.web, w/2, finalY + 13, { align: 'center' });
+
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(7);
+    let contactInfo = "";
+    if (city.contacto) contactInfo += city.contacto + " | ";
+    if (city.web) contactInfo += city.web;
+    if(contactInfo) {
+      doc.text(contactInfo, w/2, finalY + 9, { align: 'center' });
     }
-    
+
+    const cityTitleFooter = city.nombre_es.toLowerCase().startsWith('mezquita') ? city.nombre_es : `Mezquita de ${city.nombre_es}`;
+    doc.setFont('helvetica', 'italic');
     doc.setFontSize(6.5);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18° / 17°', w/2, finalY + 18, { align: 'center' });
+    doc.setTextColor(100, 100, 100);
+    doc.text(`* Horarios calculados matemáticamente bajo jurisprudencia Maliki (Ángulos: 18° / 17°) para ${cityTitleFooter}.`, w/2, finalY + 13, { align: 'center' });
 
-    doc.save(`FALAK_QAYRAN_${city.id}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.pdf`);
+    // MANDATORY TEXT (Falak Qayrán)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setFillColor(0,0,0);
+    doc.rect(margin + 5, finalY + 16, w - margin*2 - 10, 6, 'F');
+    doc.setTextColor(255,255,255);
+    doc.text("DATOS PROPORCIONADOS POR FALAK QAYRAN (PROYECTO DE MEZQUITA GUADAÍRA)", w/2, finalY + 20.25, { align: 'center' });
+
+    doc.save(`FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.pdf`);
   } catch (e) {
     console.error(e);
     alert('Error generando el PDF. Revise la consola.');

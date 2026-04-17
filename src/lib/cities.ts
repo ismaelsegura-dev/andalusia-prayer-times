@@ -67,5 +67,22 @@ export const CITIES: Record<string, CityConfig> = {
       lng: 2.1734,
       alt: 25
     }
+  },
+  alcala: {
+    id: "alcala",
+    nombre_es: "Mezquita Guadaíra",
+    fundacion: null,
+    col_pri: "#95969c",
+    col_sec: "#6d6e71",
+    col_acc: "#000000",
+    geo: "Alcalá de Guadaíra (37°20'N / 5°51'O)  ·  Alt: 46 m  ·  UTC+1  ·  Crepúsculo: 18°/17°",
+    contacto: null,
+    web: null,
+    logo: "",
+    coords: {
+      lat: 37.337096004738456,
+      lng: -5.8504657930267285,
+      alt: 46
+    }
   }
 };
