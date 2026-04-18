@@ -46,7 +46,8 @@ const MESES_VALIDADOS_POR_EMIR: Record<string, string> = {
   "1447-07": "2025-12-22", // Rajab 1447
   "1447-08": "2026-01-20", // Sha'ban 1447
   "1447-09": "2026-02-19", // Ramadán 1447
-  "1447-10": "2026-03-20", // Shawwal 1447 ← último mes validado
+  "1447-10": "2026-03-20", // Shawwal 1447
+  "1447-11": "2026-04-19", // Dhu al-Qi'dah 1447 ← último mes validado
 };
 
 export const useStore = create<AppState>()(

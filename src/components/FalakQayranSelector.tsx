@@ -69,12 +69,18 @@ const FalakQayranSelector: React.FC = () => {
                 >
                   {HIJRI_MONTHS.map((m, i) => {
                     const monthNum = i + 1;
+                    const monthKey = `${selectedHijriYear}-${monthNum.toString().padStart(2, '0')}`;
+                    const isValidated = !!validatedMonths[monthKey];
                     const isFuture =
                       selectedHijriYear > todayHijri.year ||
                       (selectedHijriYear === todayHijri.year && monthNum > todayHijri.month);
+                    
+                    // A month is available if it's not future OR if it has been validated by the Emir
+                    const isDisabled = isFuture && !isValidated;
+
                     return (
-                      <option key={monthNum} value={monthNum} disabled={isFuture}>
-                        {m}{isFuture ? ' 🔒' : ''}
+                      <option key={monthNum} value={monthNum} disabled={isDisabled}>
+                        {m}{isDisabled ? ' 🔒' : ''}
                       </option>
                     );
                   })}
