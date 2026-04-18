@@ -84,7 +84,7 @@ const Dashboard: React.FC = () => {
       {/* Date & Location Header - Takes left half on large screens */}
       <div className="border-4 border-black bg-white shadow-[8px_8px_0_0_#000] flex-1 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px] p-8" style={{ backgroundColor: city.col_pri }}>
         <p className="font-mono text-sm font-bold tracking-widest text-white opacity-90 mb-2 z-10 text-center uppercase">
-          {city.nombre_es} // PRÓXIMO REZO
+          {city.nombre_es} // PRÓXIMA ORACIÓN
         </p>
         <h3 className="font-serif text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter mb-2 z-10 leading-none text-white text-center">
           {nextPrayerName ? nextPrayerName.toUpperCase() : 'CALCULANDO'}
@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
       {/* Prayers List - Takes right half */}
       <div className="border-4 border-black bg-white shadow-[8px_8px_0_0_#000] flex-1 flex flex-col">
         <div className="bg-black text-white p-4 flex justify-between items-center font-mono text-xs font-bold uppercase tracking-widest">
-          <span>Rezo Hoy ({format(now, 'dd/MM/yy')})</span>
+          <span>Oración Hoy ({format(now, 'dd/MM/yy')})</span>
           <span>Hora Local</span>
         </div>
         <div className="flex flex-col flex-1 overflow-hidden">

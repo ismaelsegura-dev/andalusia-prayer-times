@@ -75,7 +75,7 @@ export const generateHighFidelityPDF = async (
 
     doc.setFont('courier', 'bold');
     doc.setFontSize(10);
-    doc.text(`FALAK QAYRAN // HORARIOS DE REZO`, w/2, margin + 18, { align: 'center' });
+    doc.text(`FALAK QAYRAN // HORARIOS DE ORACIÓN`, w/2, margin + 18, { align: 'center' });
 
     // Decorative/Brutalist separator
     doc.setLineWidth(1.5);
