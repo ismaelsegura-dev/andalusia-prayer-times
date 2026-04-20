@@ -61,7 +61,7 @@ const MonthlyTable: React.FC = () => {
           <tbody className="font-mono text-sm md:text-base">
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const d = addDays(startDate, i);
-              const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d).local;
+              const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
               return (
                 <tr key={i} className="border-b-2 border-gray-200 hover:bg-gray-100 transition-colors last:border-b-0 group">
                   <td className="p-4 border-r-2 border-gray-200 bg-gray-50 font-bold text-left group-hover:bg-black group-hover:text-white transition-colors w-1/4">

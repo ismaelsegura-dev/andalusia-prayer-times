@@ -4,6 +4,7 @@ import FalakQayranSelector from './components/FalakQayranSelector';
 import Dashboard from './components/Dashboard';
 import MonthlyTable from './components/MonthlyTable';
 import AdminPanel from './components/AdminPanel';
+import PrayerWidget from './components/PrayerWidget';
 
 const AppContent = () => {
   const [showAdmin, setShowAdmin] = useState(false);
@@ -60,6 +61,11 @@ const AppContent = () => {
 };
 
 export default function App() {
+  // ── Widget route — completely isolated, no header/footer ──────────────
+  if (window.location.pathname === '/widget') {
+    return <PrayerWidget />;
+  }
+
   return (
     <StoreProvider>
       <AppContent />

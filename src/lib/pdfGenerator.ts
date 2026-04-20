@@ -93,7 +93,7 @@ export const generateHighFidelityPDF = async (
     const tableData = [];
     for (let i = 0; i < daysInMonth; i++) {
       const d = addDays(startDate, i);
-      const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d).local;
+      const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
       tableData.push([
         `${i + 1} ${HIJRI_MONTHS[selectedHijriMonth-1].substring(0,3).toUpperCase()} [${format(d, 'dd/MM', { locale: es })}]`,
         p.fajr,
@@ -168,7 +168,7 @@ export const generateHighFidelityPDF = async (
     doc.setFillColor(0,0,0);
     doc.rect(margin + 5, finalY + 16, w - margin*2 - 10, 6, 'F');
     doc.setTextColor(255,255,255);
-    doc.text("DATOS PROPORCIONADOS POR FALAK QAYRAN (PROYECTO DE MEZQUITA GUADAÍRA)", w/2, finalY + 20.25, { align: 'center' });
+    doc.text("DATOS PROPORCIONADOS POR FALAK QAYRAN", w/2, finalY + 20.25, { align: 'center' });
 
     doc.save(`FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.pdf`);
   } catch (e) {

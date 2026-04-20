@@ -118,27 +118,71 @@ const FalakQayranSelector: React.FC = () => {
           </div>
         </div>
 
-        {/* Generate Button Wrapper */}
-        <div className="w-full xl:w-auto flex-shrink-0">
-          <button 
+        {/* Download Buttons */}
+        <div className="w-full xl:w-auto flex-shrink-0 flex flex-col sm:flex-row gap-3">
+          {/* PDF */}
+          <DownloadButton
+            id="btn-download-pdf"
+            label="PDF"
+            isGenerating={isGenerating}
             onClick={async () => {
               await generateHighFidelityPDF(selectedCityId, selectedHijriMonth, selectedHijriYear, setIsGenerating);
               setDownloadSuccess(true);
               setTimeout(() => setDownloadSuccess(false), 2000);
             }}
-            disabled={isGenerating}
-            className={`w-full xl:w-auto font-mono text-sm md:text-base font-bold uppercase tracking-widest border-2 px-8 py-4 transition-all h-[60px] flex items-center justify-center cursor-pointer ${
-              downloadSuccess 
-              ? 'border-black bg-white text-black shadow-none translate-x-[4px] translate-y-[4px]' 
-              : 'border-black bg-black text-white hover:bg-white hover:text-black shadow-[4px_4px_0_0_#D1D5DB] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {isGenerating ? '[ GENERANDO... ]' : downloadSuccess ? '[ ✔ ÉXITO ]' : '[ DESCARGAR PDF ]'}
-          </button>
+            successLabel={downloadSuccess}
+          />
+          {/* PNG */}
+          <DownloadButton
+            id="btn-download-png"
+            label="PNG"
+            isGenerating={isGenerating}
+            onClick={async () => {
+              const { generatePNG } = await import('../lib/pngGenerator');
+              await generatePNG(selectedCityId, selectedHijriMonth, selectedHijriYear, setIsGenerating);
+            }}
+          />
+          {/* XLSX */}
+          <DownloadButton
+            id="btn-download-xlsx"
+            label="XLSX"
+            isGenerating={isGenerating}
+            onClick={async () => {
+              const { generateXLSX } = await import('../lib/xlsxGenerator');
+              generateXLSX(selectedCityId, selectedHijriMonth, selectedHijriYear, setIsGenerating);
+            }}
+          />
         </div>
       </div>
     </div>
   );
 };
+
+const DownloadButton = ({
+  id,
+  label,
+  isGenerating,
+  onClick,
+  successLabel,
+}: {
+  id: string;
+  label: string;
+  isGenerating: boolean;
+  onClick: () => void;
+  successLabel?: boolean;
+}) => (
+  <button
+    id={id}
+    onClick={onClick}
+    disabled={isGenerating}
+    className={`font-mono text-sm font-bold uppercase tracking-widest border-2 px-6 py-4 transition-all h-[60px] flex items-center justify-center cursor-pointer whitespace-nowrap ${
+      successLabel
+        ? 'border-black bg-white text-black shadow-none translate-x-[4px] translate-y-[4px]'
+        : 'border-black bg-black text-white hover:bg-white hover:text-black shadow-[4px_4px_0_0_#D1D5DB] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]'
+    } disabled:opacity-50 disabled:cursor-not-allowed`}
+  >
+    {isGenerating ? '[ ... ]' : successLabel ? '[ ✔ ]' : `[ ↓ ${label} ]`}
+  </button>
+);
 
 export default FalakQayranSelector;

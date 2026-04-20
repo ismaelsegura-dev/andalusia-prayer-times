@@ -202,7 +202,7 @@ function anguloAHoraUTC(angoloHorario, transitoUTC, esPuesta) {
  * Ejemplo Madrid (UTC+1 en invierno, UTC+2 en verano):
  *   const offsetHoras = date.getTimezoneOffset() / -60;
  */
-function calcularHorariosOracion(lat, lng, alt, date) {
+function calcularHorariosOracion(lat, lng, alt, date, maghribOffset = 0) {
   // ── 1. Obtener parámetros astronómicos del día ──
   const { delta, eqTime, altitudCorr } = calcularParametrosSolares(lat, lng, alt, date);
 
@@ -261,8 +261,8 @@ function calcularHorariosOracion(lat, lng, alt, date) {
   const maghribUTC = horaONull(HHorizonte, true);    // Puesta del sol + 2 min
   const ishaUTC = horaONull(HIsha, true);            // Tras puesta del sol
 
-  // ── 7. Aplicar margen de seguridad de Maghrib (+2 minutos) ──
-  const maghribConMargenUTC = maghribUTC !== null ? maghribUTC + 2 / 60 : null;
+  // ── 7. Aplicar margen de seguridad de Maghrib (+2 min base + offset adicional) ──
+  const maghribConMargenUTC = maghribUTC !== null ? maghribUTC + (2 + (maghribOffset || 0)) / 60 : null;
 
   // ── 8. Convertir a hora local usando el offset del sistema ──
   // getTimezoneOffset() devuelve minutos con signo invertido (UTC-hora_local)
@@ -305,7 +305,7 @@ function calcularHorariosOracion(lat, lng, alt, date) {
         fajr: "18.0° (crepúsculo astronómico)",
         isha: "17.0° (crepúsculo astronómico)",
         asr: "Maliki factor 1 (sombra = altura)",
-        maghrib: "Horizonte 0° + 2 min seguridad",
+        maghrib: `Horizonte 0° + 2 min seguridad + ${maghribOffset} min offset`,
       }
     }
   };

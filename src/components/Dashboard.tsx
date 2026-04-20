@@ -16,7 +16,7 @@ const Dashboard: React.FC = () => {
   const city = CITIES[selectedCityId];
   if (!city) return null;
 
-  const prayers = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, now);
+  const prayers = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, now, city.maghribOffset);
   const localTimes = prayers.local;
 
   const parseTime = (timeStr: string) => {
@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
   if (!nextPrayerTime) {
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowPrayers = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, tomorrow);
+    const tomorrowPrayers = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, tomorrow, city.maghribOffset);
     const tFajrStr = tomorrowPrayers.local.fajr;
     if (tFajrStr && !tFajrStr.startsWith('No')) {
       const [h, m] = tFajrStr.split(':').map(Number);

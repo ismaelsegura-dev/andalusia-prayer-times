@@ -14,6 +14,7 @@ export interface CityConfig {
     lng: number;
     alt: number;
   };
+  maghribOffset?: number; // Override minutes to add mathematically to maghrib calculation
 }
 
 export const CITIES: Record<string, CityConfig> = {
@@ -32,7 +33,8 @@ export const CITIES: Record<string, CityConfig> = {
       lat: 37.1773,
       lng: -3.5986,
       alt: 828
-    }
+    },
+    maghribOffset: 5
   },
   sevilla: {
     id: "sevilla",
@@ -49,7 +51,8 @@ export const CITIES: Record<string, CityConfig> = {
       lat: 37.3891,
       lng: -5.9845,
       alt: 150
-    }
+    },
+    maghribOffset: 3
   },
   barcelona: {
     id: "barcelona",
