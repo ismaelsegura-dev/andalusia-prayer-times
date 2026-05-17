@@ -65,7 +65,7 @@ export const generatePNG = async (
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = `
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: ${A4_W}px;
@@ -77,8 +77,9 @@ export const generatePNG = async (
       padding: ${MARGIN}px;
       display: flex;
       flex-direction: column;
-      z-index: -1;
-      visibility: hidden;
+      transform: translateX(-110%);
+      opacity: 0.01;
+      pointer-events: none;
     `;
     wrapper.style.border = '3px solid #000';
 
@@ -184,14 +185,16 @@ export const generatePNG = async (
 
     document.body.appendChild(wrapper);
 
-    // Esperar layout del navegador antes de capturar
+    // Esperar layout completo del navegador antes de capturar
     await new Promise(resolve => requestAnimationFrame(resolve));
     await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => setTimeout(resolve, 120));
 
     // ── Capture ──────────────────────────────────────────────────────────
     const dataUrl = await toPng(wrapper, {
       pixelRatio: 2,
       backgroundColor: '#ffffff',
+      skipFonts: true,
     });
 
     document.body.removeChild(wrapper);
