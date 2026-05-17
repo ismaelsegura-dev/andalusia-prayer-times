@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { calcularHorariosOracion } from '../lib/prayerTimesEngine';
 import { CITIES, CityConfig } from '../lib/cities';
+import { sha256, WIDGET_SECRET_HASH } from '../lib/hash';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  WIDGET — Contador + Horarios del Día
 //  Ruta: /widget?city=granada&key=SECRET_KEY
 //
 //  SEGURIDAD:
-//    1. Si la ?key no coincide con WIDGET_SECRET_KEY → pantalla bloqueada.
+//    1. Si la ?key no coincide con el hash WIDGET_SECRET_HASH → pantalla bloqueada.
 //    2. No hay enlace público a esta ruta en la UI de la app.
 //    3. Solo tú conoces la clave y la compartes a quien autorizas (mezquitas).
 //
@@ -17,9 +18,6 @@ import { CITIES, CityConfig } from '../lib/cities';
 //      width="400" height="520" frameborder="0" style="border:none;"
 //    ></iframe>
 // ─────────────────────────────────────────────────────────────────────────────
-
-// ⚠️  CAMBIA ESTA CLAVE antes de compartirla — no la publiques en ningún commit público.
-const WIDGET_SECRET_KEY = 'falak2024emir';
 
 const PRAYER_NAMES: Record<string, string> = {
   fajr: 'Fajr',
@@ -40,11 +38,41 @@ function parseTimeToDate(timeStr: string, ref: Date): Date | null {
 
 const PrayerWidget: React.FC = () => {
   // ── Auth check ─────────────────────────────────────────────────────────
+  const [authState, setAuthState] = useState<'checking' | 'authorized' | 'denied'>('checking');
   const params = new URLSearchParams(window.location.search);
   const key = params.get('key') ?? '';
   const cityId = params.get('city') ?? 'alcala';
 
-  if (key !== WIDGET_SECRET_KEY) {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const inputHash = await sha256(key);
+      if (!cancelled) {
+        setAuthState(inputHash === WIDGET_SECRET_HASH ? 'authorized' : 'denied');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [key]);
+
+  if (authState === 'checking') {
+    return (
+      <div style={{
+        fontFamily: 'monospace',
+        background: '#000',
+        color: '#fff',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '0.75rem',
+        letterSpacing: '0.1em'
+      }}>
+        VERIFICANDO...
+      </div>
+    );
+  }
+
+  if (authState === 'denied') {
     return (
       <div style={{
         fontFamily: 'monospace',
@@ -61,10 +89,10 @@ const PrayerWidget: React.FC = () => {
       }}>
         <div style={{ fontSize: '2rem' }}>🔒</div>
         <div style={{ fontWeight: 700, letterSpacing: '0.15em', fontSize: '0.75rem' }}>
-          ACCESO RESTRINGIDO<br />FALAK QAYRĀN
+          ACCESO RESTRINGIDO<br />FALAK QAYRAN
         </div>
         <div style={{ opacity: 0.5, fontSize: '0.65rem', maxWidth: '200px', lineHeight: 1.6 }}>
-          Este widget requiere autorización.<br />Contacta con el administrador de Falak Qayrān.
+          Este widget requiere autorizacion.<br />Contacta con el administrador de Falak Qayran.
         </div>
       </div>
     );

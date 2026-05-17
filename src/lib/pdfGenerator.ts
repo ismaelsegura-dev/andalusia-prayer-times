@@ -37,10 +37,20 @@ export const hexToRgb = (hex: string): [number, number, number] => {
   ] : [0, 0, 0];
 };
 
+/** Abreviatura del mes hijri para la cabecera de tabla */
+const getHijriMonthShort = (monthIndex: number): string => {
+  const shorts = [
+    "Muh.", "Saf.", "R.A.", "R.T.",
+    "J.A.", "J.T.", "Raj.", "Sha.",
+    "Ram.", "Shw.", "D.Q.", "D.H."
+  ];
+  return shorts[monthIndex - 1] ?? "Dia";
+};
+
 export const generateHighFidelityPDF = async (
-  cityId: string, 
-  selectedHijriMonth: number, 
-  selectedHijriYear: number, 
+  cityId: string,
+  selectedHijriMonth: number,
+  selectedHijriYear: number,
   setIsGenerating: (v: boolean) => void
 ) => {
   const city = CITIES[cityId];
@@ -56,121 +66,220 @@ export const generateHighFidelityPDF = async (
     const doc = new jsPDF('p', 'mm', 'a4');
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
-    
+
     const rgbPri = hexToRgb(city.col_pri);
+    const rgbSec = hexToRgb(city.col_sec);
+    const rgbAcc = hexToRgb(city.col_acc);
 
     const margin = 15;
-    
-    // Brutalist Outer Border
-    doc.setDrawColor(0, 0, 0);       
+
+    // ── 1. MARCO EXTERIOR BRUTALISTA ──
+    doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(1.5);
-    doc.rect(margin, margin, w - margin*2, h - margin*2, 'S');
+    doc.rect(margin, margin, w - margin * 2, h - margin * 2, 'S');
 
-    // Branding Header
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(22);
-    const cityTitle = city.nombre_es.toUpperCase();
-    doc.text(cityTitle, w/2, margin + 12, { align: 'center' });
+    // ── 2. CABECERA / FUNDACION ──
+    let currentY = margin + 8;
 
-    doc.setFont('courier', 'bold');
-    doc.setFontSize(10);
-    doc.text(`FALAK QAYRAN // HORARIOS DE ORACIÓN`, w/2, margin + 18, { align: 'center' });
+    if (city.fundacion) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(13);
+      doc.text(city.fundacion.toUpperCase(), w / 2, currentY, { align: 'center' });
+      currentY += 5;
+    } else {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(13);
+      doc.text(city.nombre_es.toUpperCase(), w / 2, currentY, { align: 'center' });
+      currentY += 5;
+    }
 
-    // Decorative/Brutalist separator
-    doc.setLineWidth(1.5);
-    doc.line(margin, margin + 21, w - margin, margin + 21);
-    
-    doc.setFontSize(11);
-    doc.text(`${HIJRI_MONTHS[selectedHijriMonth-1].toUpperCase()} ${selectedHijriYear}`, w/2, margin + 27, { align: 'center' });
+    // Linea decorativa bajo fundacion
+    doc.setLineWidth(0.8);
+    doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
+    doc.line(margin + 10, currentY, w - margin - 10, currentY);
+    currentY += 4;
 
+    // ── 3. TEXTO DESCRIPTIVO DEL DOCUMENTO ──
     doc.setFont('helvetica', 'normal');
-    const geoText = `LAT: ${city.coords.lat.toFixed(4)}° // LNG: ${city.coords.lng.toFixed(4)}° // ALT: ${city.coords.alt}m`;
-    doc.setFontSize(7.5);
-    doc.text(geoText, w/2, margin + 31, { align: 'center' });
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(9.5);
 
-    // Table Data
-    const tableData = [];
+    const mesHijri = HIJRI_MONTHS[selectedHijriMonth - 1];
+    const mesShort = getHijriMonthShort(selectedHijriMonth);
+    const anioGregStart = startDate.getFullYear();
+    const anioGregEnd = addDays(startDate, daysInMonth - 1).getFullYear();
+    const anioGregStr = anioGregStart === anioGregEnd ? String(anioGregStart) : `${anioGregStart}/${anioGregEnd}`;
+
+    doc.text('Parte de los momentos del salah correspondiente', w / 2, currentY, { align: 'center' });
+    currentY += 4.5;
+    doc.text(`al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)`, w / 2, currentY, { align: 'center' });
+    currentY += 4.5;
+    doc.text(`para la ciudad de ${city.nombre_es} y cercanias.`, w / 2, currentY, { align: 'center' });
+    currentY += 6;
+
+    // ── 4. TABLA DE HORARIOS ──
+    const tableData: (string | boolean)[][] = [];
     for (let i = 0; i < daysInMonth; i++) {
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
+
+      const fechaStr = format(d, 'EEE dd MMM', { locale: es }).toLowerCase();
+      const isQadr = (i + 1) === 27 && selectedHijriMonth === 9;
+
       tableData.push([
-        `${i + 1} ${HIJRI_MONTHS[selectedHijriMonth-1].substring(0,3).toUpperCase()} [${format(d, 'dd/MM', { locale: es })}]`,
+        String(i + 1),
+        fechaStr,
         p.fajr,
         p.shuruq,
         p.dhuhr,
         p.asr,
         p.maghrib,
         p.isha,
+        isQadr
       ]);
     }
 
     autoTable(doc, {
-      head: [['FECHA', 'FAJR', 'SHURUQ', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA']],
-      body: tableData,
-      startY: margin + 34,
-      theme: 'grid', // Brutalist grid theme
-      styles: { 
-        font: 'courier', 
-        fontSize: 8.5, 
-        halign: 'center', 
-        cellPadding: 1.2, 
+      head: [[mesShort, 'Fecha', 'Fajr', 'Shuruq', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']],
+      body: tableData.map(row => row.slice(0, 8)),
+      startY: currentY,
+      theme: 'grid',
+      styles: {
+        font: 'courier',
+        fontSize: 8.2,
+        halign: 'center',
+        cellPadding: 1.5,
         textColor: [0, 0, 0],
         lineColor: [0, 0, 0],
-        lineWidth: 0.5
+        lineWidth: 0.4
       },
-      headStyles: { 
-        fillColor: rgbPri, // Use the priority color as background for header
+      headStyles: {
+        fillColor: rgbPri,
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        halign: 'center'
+        halign: 'center',
+        fontSize: 8.5
       },
-      alternateRowStyles: { fillColor: [225, 225, 225] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
       columnStyles: {
-        0: { halign: 'left', fontStyle: 'bold', fillColor: [210, 210, 210] }
+        0: { cellWidth: 12, fontStyle: 'bold', halign: 'center' },
+        1: { cellWidth: 28, halign: 'left', fontStyle: 'normal' },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 18, textColor: [120, 120, 120] },
+        4: { cellWidth: 18 },
+        5: { cellWidth: 18 },
+        6: { cellWidth: 20, fontStyle: 'bold', textColor: rgbSec },
+        7: { cellWidth: 20 }
       },
-      margin: { top: 35, bottom: 25, left: margin + 2, right: margin + 2 },
-      pageBreak: 'avoid'
+      margin: { top: currentY, bottom: 60, left: margin + 2, right: margin + 2 },
+      pageBreak: 'avoid',
+      didDrawCell: (data) => {
+        if (data.section === 'body' && data.row.index >= 0) {
+          const rowIndex = data.row.index;
+          const isQadrRow = tableData[rowIndex]?.[8] === true;
+          if (isQadrRow) {
+            doc.setFillColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
+            doc.rect(data.cell.x, data.cell.y, 1.2, data.cell.height, 'F');
+            doc.setFillColor(255, 251, 240);
+            doc.rect(data.cell.x + 1.2, data.cell.y, data.cell.width - 1.2, data.cell.height, 'F');
+          }
+        }
+      }
     });
 
-    // Footer
-    const finalY = (doc as any).lastAutoTable.finalY + 5;
-    
-    // Bottom Section Boundary
-    doc.setDrawColor(0,0,0);
-    doc.setLineWidth(1);
-    doc.line(margin + 5, finalY, w - margin - 5, finalY);
+    let finalY = (doc as any).lastAutoTable.finalY + 4;
 
-    if (city.fundacion) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.text(city.fundacion.toUpperCase(), w/2, finalY + 5, { align: 'center' });
+    // ── 5. DIA DE OBSERVACION (dia 28 del mes) ──
+    const dia28Row = tableData.find(r => r[0] === '28');
+    if (dia28Row) {
+      const obsText = `Dia de observacion: ${dia28Row[1]}`;
+      doc.setFillColor(255, 251, 240);
+      doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin + 5, finalY, w - margin * 2 - 10, 6, 1.5, 1.5, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(123, 88, 0);
+      doc.text(obsText, w / 2, finalY + 4, { align: 'center' });
+      finalY += 9;
     }
 
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(7);
-    let contactInfo = "";
-    if (city.contacto) contactInfo += city.contacto + " | ";
-    if (city.web) contactInfo += city.web;
-    if(contactInfo) {
-      doc.text(contactInfo, w/2, finalY + 9, { align: 'center' });
+    // ── 6. LEYENDA LAYLAT AL-QADR (solo Ramadan) ──
+    const qadrExists = selectedHijriMonth === 9 && tableData.some(r => r[8]);
+    if (qadrExists) {
+      doc.setFillColor(255, 251, 240);
+      doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin + 5, finalY, w - margin * 2 - 10, 6, 1.5, 1.5, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(123, 88, 0);
+      doc.text('Dia 27 de Ramadan — Laylat al-Qadr', w / 2, finalY + 4, { align: 'center' });
+      finalY += 9;
     }
 
-    const cityTitleFooter = city.nombre_es.toLowerCase().startsWith('mezquita') ? city.nombre_es : `Mezquita de ${city.nombre_es}`;
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(6.5);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`* Horarios calculados matemáticamente bajo jurisprudencia Maliki (Ángulos: 18° / 17°) para ${cityTitleFooter}.`, w/2, finalY + 13, { align: 'center' });
+    // ── 7. PIE DE PAGINA TECNICO ──
+    // Espacio reservado para footer+sello: ~32mm
+    const footerReserve = 32;
+    const footerBaseY = h - margin - footerReserve;
 
-    // MANDATORY TEXT (Falak Qayrán)
+    // Si la tabla ocupa demasiado, saltamos a nueva pagina para el footer
+    if (finalY > footerBaseY - 5) {
+      doc.addPage();
+      finalY = margin + 10;
+      // Redibujar marco exterior en nueva pagina
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(1.5);
+      doc.rect(margin, margin, w - margin * 2, h - margin * 2, 'S');
+    }
+
+    // Lineas decorativas dobles
+    doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
+    doc.setLineWidth(1.2);
+    doc.line(margin + 10, footerBaseY + 14, w - margin - 10, footerBaseY + 14);
+    doc.setDrawColor(rgbPri[0], rgbPri[1], rgbPri[2]);
+    doc.setLineWidth(0.5);
+    doc.line(margin + 10, footerBaseY + 12.5, w - margin - 10, footerBaseY + 12.5);
+
+    doc.setTextColor(60, 60, 60);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.text(city.geo, w / 2, footerBaseY + 9, { align: 'center' });
+
+    if (city.contacto) {
+      doc.setTextColor(40, 40, 40);
+      doc.setFontSize(6.8);
+      doc.text(city.contacto, w / 2, footerBaseY + 5.5, { align: 'center' });
+    }
+
+    if (city.web) {
+      doc.setTextColor(rgbSec[0], rgbSec[1], rgbSec[2]);
+      doc.setFontSize(6.8);
+      doc.text(city.web, w / 2, footerBaseY + 2, { align: 'center' });
+    }
+
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(6);
+    doc.text(
+      'Calculado con rigor astronomico · Fiqh Maliki · Angulo de crepusculo 18°',
+      w / 2,
+      footerBaseY - 1.5,
+      { align: 'center' }
+    );
+
+    // ── 8. SELLO FALAK QAYRAN ──
+    const stampH = 5.5;
+    const stampY = h - margin - stampH - 2;
+    doc.setFillColor(0, 0, 0);
+    doc.rect(margin + 5, stampY, w - margin * 2 - 10, stampH, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setFillColor(0,0,0);
-    doc.rect(margin + 5, finalY + 16, w - margin*2 - 10, 6, 'F');
-    doc.setTextColor(255,255,255);
-    doc.text("DATOS PROPORCIONADOS POR FALAK QAYRAN", w/2, finalY + 20.25, { align: 'center' });
+    doc.setFontSize(7.5);
+    doc.text('DATOS PROPORCIONADOS POR FALAK QAYRAN', w / 2, stampY + 3.8, { align: 'center' });
 
-    doc.save(`FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.pdf`);
+    doc.save(`FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2, '0')}.pdf`);
   } catch (e) {
     console.error(e);
     alert('Error generando el PDF. Revise la consola.');

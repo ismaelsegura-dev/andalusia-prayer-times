@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useStore } from '../store';
 import { HIJRI_MONTHS } from '../lib/lunar-calendar';
 import { format, addDays } from 'date-fns';
+import { sha256, ADMIN_PASSWORD_HASH } from '../lib/hash';
 
 const AdminPanel: React.FC = () => {
   const { isAdmin, setIsAdmin, validatedMonths, setValidatedMonth } = useStore();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'emir123') {
+    const inputHash = await sha256(password);
+    if (inputHash === ADMIN_PASSWORD_HASH) {
       setIsAdmin(true);
       setError('');
     } else {

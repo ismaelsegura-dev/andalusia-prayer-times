@@ -1,3 +1,11 @@
+export interface LunarParams {
+  dia: string;
+  puestaSol: string;
+  puestaLuna: string;
+  difLunaSol: string;
+  edadLunar: string;
+}
+
 export interface CityConfig {
   id: string;
   nombre_es: string;
@@ -15,6 +23,9 @@ export interface CityConfig {
     alt: number;
   };
   maghribOffset?: number; // Override minutes to add mathematically to maghrib calculation
+  qiblah: string | null;
+  declinacion: string | null;
+  lunarParams?: LunarParams;
 }
 
 export const CITIES: Record<string, CityConfig> = {
@@ -25,7 +36,7 @@ export const CITIES: Record<string, CityConfig> = {
     col_pri: "#1B4332",
     col_sec: "#2D6A4F",
     col_acc: "#C8A84B",
-    geo: "Granada (37°11'N / 3°36'O)  ·  Alt: 828 m  ·  UTC+1  ·  Crepúsculo: 18°",
+    geo: "Granada (37°11'N / 3°36'O)  ·  Alt: 828 m  ·  Long. ref.: 15°E  ·  UTC+1  ·  Crepúsculo: 18°  ·  Qiblah: 100.4°  ·  Declinación: 0.58°",
     contacto: null,
     web: null,
     logo: "/logos/granada_header2.png",
@@ -34,7 +45,16 @@ export const CITIES: Record<string, CityConfig> = {
       lng: -3.5986,
       alt: 828
     },
-    maghribOffset: 5
+    maghribOffset: 5,
+    qiblah: "100.4º",
+    declinacion: "0.58º",
+    lunarParams: {
+      dia: "19/03/2026",
+      puestaSol: "19h 29m 43s",
+      puestaLuna: "20h 15m 31s",
+      difLunaSol: "00h 45m 47s",
+      edadLunar: "00d 17h 06m"
+    }
   },
   sevilla: {
     id: "sevilla",
@@ -43,7 +63,7 @@ export const CITIES: Record<string, CityConfig> = {
     col_pri: "#6B1A0E",
     col_sec: "#A33020",
     col_acc: "#E8A020",
-    geo: "Sevilla (37°23'N / 5°59'O)  ·  Alt: 150 m  ·  UTC+1  ·  Crepúsculo: 18°",
+    geo: "Sevilla (37°23'N / 5°59'O)  ·  Alt: 150 m  ·  Long. ref.: 15°E  ·  UTC+1  ·  Crepúsculo: 18°  ·  Qiblah: 98.8°  ·  Declinación: –0.06°",
     contacto: "Plaza Ponce de León 9, 41003 Sevilla  ·  Tel: +34 954 022 979",
     web: "info@mezquitadesevilla.com  ·  mezquitadesevilla.com",
     logo: "/logos/sevilla_header2.webp",
@@ -52,7 +72,16 @@ export const CITIES: Record<string, CityConfig> = {
       lng: -5.9845,
       alt: 150
     },
-    maghribOffset: 3
+    maghribOffset: 3,
+    qiblah: "98.8º",
+    declinacion: "–0.06º",
+    lunarParams: {
+      dia: "19/03/2026",
+      puestaSol: "19h 36m 45s",
+      puestaLuna: "20h 22m 59s",
+      difLunaSol: "00h 46m 14s",
+      edadLunar: "00d 17h 13m"
+    }
   },
   barcelona: {
     id: "barcelona",
@@ -61,7 +90,7 @@ export const CITIES: Record<string, CityConfig> = {
     col_pri: "#002B5C",
     col_sec: "#0055A4",
     col_acc: "#F0B800",
-    geo: "Barcelona (41°23'N / 2°09'E)  ·  Alt: 25 m  ·  UTC+1  ·  Crepúsculo: 18°",
+    geo: "Barcelona (41°23'N / 2°09'E)  ·  Alt: 25 m  ·  Long. ref.: 15°E  ·  UTC+1  ·  Crepúsculo: 18°  ·  Qiblah: 110.5°  ·  Declinación: 1.99°",
     contacto: "Carrer Benet Mercadé 26 Local 1, 08012 Barcelona  ·  Tel: +34 935 312 292",
     web: "info@bcnmosque.com  ·  bcnmosque.com",
     logo: "/logos/barcelona.png", // Plaeholder if loaded later
@@ -69,6 +98,15 @@ export const CITIES: Record<string, CityConfig> = {
       lat: 41.3851,
       lng: 2.1734,
       alt: 25
+    },
+    qiblah: "110.50º",
+    declinacion: "1.99º",
+    lunarParams: {
+      dia: "19/03/2026",
+      puestaSol: "19h 06m 08s",
+      puestaLuna: "19h 53m 40s",
+      difLunaSol: "00h 47m 32s",
+      edadLunar: "00d 16h 42m"
     }
   },
   alcala: {
@@ -86,6 +124,8 @@ export const CITIES: Record<string, CityConfig> = {
       lat: 37.337096004738456,
       lng: -5.8504657930267285,
       alt: 46
-    }
+    },
+    qiblah: null,
+    declinacion: null
   }
 };
