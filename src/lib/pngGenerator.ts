@@ -12,6 +12,12 @@ function hexToCssRgb(hex: string) {
   return r ? `rgb(${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)})` : '#000';
 }
 
+/** Abreviatura del mes hijri */
+function getHijriShort(monthIndex: number) {
+  const shorts = ["Muh.","Saf.","R.A.","R.T.","J.A.","J.T.","Raj.","Sha.","Ram.","Shw.","D.Q.","D.H."];
+  return shorts[monthIndex - 1] ?? "Dia";
+}
+
 export const generatePNG = async (
   cityId: string,
   selectedHijriMonth: number,
@@ -27,23 +33,35 @@ export const generatePNG = async (
     const startDate = getHijriMonthStart(selectedHijriYear, selectedHijriMonth, validatedMonths);
     const daysInMonth = getHijriMonthLength(selectedHijriYear, selectedHijriMonth, validatedMonths);
 
+    const mesShort = getHijriShort(selectedHijriMonth);
+    const mesHijri = HIJRI_MONTHS[selectedHijriMonth - 1];
+    const anioGregStart = startDate.getFullYear();
+    const anioGregEnd = addDays(startDate, daysInMonth - 1).getFullYear();
+    const anioGregStr = anioGregStart === anioGregEnd ? String(anioGregStart) : `${anioGregStart}/${anioGregEnd}`;
+
     // ── Build rows ──────────────────────────────────────────────────────
-    const rows: string[][] = [];
+    const rows: { vals: string[]; isQadr: boolean }[] = [];
+    let dia28Fecha = '';
     for (let i = 0; i < daysInMonth; i++) {
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
-      rows.push([
-        `${i + 1} ${HIJRI_MONTHS[selectedHijriMonth-1].substring(0,3).toUpperCase()} [${format(d, 'dd/MM', { locale: es })}]`,
-        p.fajr, p.shuruq, p.dhuhr, p.asr, p.maghrib, p.isha
-      ]);
+      const fechaStr = format(d, 'EEE dd MMM', { locale: es }).toLowerCase();
+      const isQadr = (i + 1) === 27 && selectedHijriMonth === 9;
+      if (i + 1 === 28) dia28Fecha = fechaStr;
+      rows.push({
+        vals: [String(i + 1), fechaStr, p.fajr, p.shuruq, p.dhuhr, p.asr, p.maghrib, p.isha],
+        isQadr
+      });
     }
 
     // ── Create off-screen container (A4 @ 96dpi → 794×1123px) ───────────
     const A4_W = 794;
     const A4_H = 1123;
-    const MARGIN = 32;
+    const MARGIN = 28;
     const priColor = city.col_pri;
     const priCss = hexToCssRgb(priColor);
+    const secCss = hexToCssRgb(city.col_sec);
+    const accCss = hexToCssRgb(city.col_acc);
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = `
@@ -57,32 +75,33 @@ export const generatePNG = async (
       display: flex;
       flex-direction: column;
     `;
-
-    // Outer border
     wrapper.style.border = '3px solid #000';
 
     // ── Header ──────────────────────────────────────────────────────────
     const header = document.createElement('div');
-    header.style.cssText = `text-align:center; border-bottom: 3px solid #000; padding-bottom: 10px; margin-bottom: 10px;`;
-    const cityTitle = city.nombre_es.toUpperCase();
+    header.style.cssText = `text-align:center; border-bottom: 2px solid ${accCss}; padding-bottom: 6px; margin-bottom: 6px;`;
+    const title = city.fundacion ? city.fundacion.toUpperCase() : city.nombre_es.toUpperCase();
     header.innerHTML = `
-      <div style="font-family: Helvetica, Arial, sans-serif; font-size:26px; font-weight:900; letter-spacing:-1px; margin-bottom:4px;">${cityTitle}</div>
-      <div style="font-size:11px; font-weight:700; letter-spacing:2px; margin-bottom:6px;">FALAK QAYRAN // HORARIOS DE ORACIÓN</div>
-      <div style="font-size:13px; font-weight:700; letter-spacing:1px; margin-bottom:4px;">${HIJRI_MONTHS[selectedHijriMonth-1].toUpperCase()} ${selectedHijriYear}</div>
-      <div style="font-size:8px; opacity:0.6;">LAT: ${city.coords.lat.toFixed(4)}° // LNG: ${city.coords.lng.toFixed(4)}° // ALT: ${city.coords.alt}m</div>
+      <div style="font-family: Helvetica, Arial, sans-serif; font-size:22px; font-weight:900; letter-spacing:-0.5px; margin-bottom:2px;">${title}</div>
+      <div style="font-family: Helvetica, Arial, sans-serif; font-size:9px; color:#333; margin-bottom:3px;">Parte de los momentos del salah correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)</div>
+      <div style="font-family: Helvetica, Arial, sans-serif; font-size:9px; color:#333;">para la ciudad de ${city.nombre_es} y cercanias.</div>
     `;
     wrapper.appendChild(header);
 
     // ── Table ────────────────────────────────────────────────────────────
     const table = document.createElement('table');
-    table.style.cssText = `width:100%; border-collapse:collapse; font-size:${daysInMonth > 28 ? '9.5px' : '10.5px'}; flex:1;`;
+    const rowFontSize = daysInMonth > 28 ? '9px' : '9.5px';
+    table.style.cssText = `width:100%; border-collapse:collapse; font-size:${rowFontSize}; flex-shrink:0;`;
 
     const thead = document.createElement('thead');
     const headRow = document.createElement('tr');
-    ['FECHA','FAJR','SHURUQ','DHUHR','ASR','MAGHRIB','ISHA'].forEach(h => {
+    [mesShort,'Fecha','Fajr','Shuruq','Dhuhr','Asr','Maghrib','Isha'].forEach((h) => {
       const th = document.createElement('th');
       th.textContent = h;
-      th.style.cssText = `background:${priCss}; color:#fff; padding:5px 4px; border:1px solid #000; text-align:center; font-weight:700; letter-spacing:1px;`;
+      let extra = '';
+      if (h === 'Maghrib') extra = `color:${secCss};`;
+      if (h === 'Shuruq') extra = `color:#888;`;
+      th.style.cssText = `background:${priCss}; color:#fff; padding:3px 2px; border:1px solid #000; text-align:center; font-weight:700; letter-spacing:0.5px; font-family:Courier New,monospace; ${extra}`;
       headRow.appendChild(th);
     });
     thead.appendChild(headRow);
@@ -91,13 +110,25 @@ export const generatePNG = async (
     const tbody = document.createElement('tbody');
     rows.forEach((row, idx) => {
       const tr = document.createElement('tr');
-      const bg = idx % 2 === 1 ? '#e1e1e1' : '#fff';
-      row.forEach((cell, ci) => {
+      const bg = row.isQadr ? '#FFFBF0' : (idx % 2 === 1 ? '#f5f5f5' : '#fff');
+      row.vals.forEach((cell, ci) => {
         const td = document.createElement('td');
         td.textContent = cell;
-        let cellStyle = `padding:4px; border:1px solid #000; text-align:center; background:${bg};`;
+        let cellStyle = `padding:2px 2px; border:1px solid #000; text-align:center; background:${bg}; font-family:Courier New,monospace;`;
         if (ci === 0) {
-          cellStyle = `padding:4px 6px; border:1px solid #000; text-align:left; background:#d2d2d2; font-weight:700;`;
+          cellStyle += ` font-weight:bold; color:${row.isQadr ? '#7B5800' : priCss};`;
+        }
+        if (ci === 1) {
+          cellStyle += ` text-align:left; padding-left:4px; color:#333;`;
+        }
+        if (ci === 3) {
+          cellStyle += ` color:#888;`;
+        }
+        if (ci === 6) {
+          cellStyle += ` font-weight:bold; color:${secCss};`;
+        }
+        if (row.isQadr && ci === 0) {
+          cellStyle += ` border-left:3px solid ${accCss};`;
         }
         td.style.cssText = cellStyle;
         tr.appendChild(td);
@@ -107,20 +138,41 @@ export const generatePNG = async (
     table.appendChild(tbody);
     wrapper.appendChild(table);
 
+    // ── Dia de Observacion ──
+    if (dia28Fecha) {
+      const obsDiv = document.createElement('div');
+      obsDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
+      obsDiv.textContent = `Dia de observacion: ${dia28Fecha}`;
+      wrapper.appendChild(obsDiv);
+    }
+
+    // ── Laylat al-Qadr (solo Ramadan) ──
+    if (selectedHijriMonth === 9 && rows.some(r => r.isQadr)) {
+      const qadrDiv = document.createElement('div');
+      qadrDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
+      qadrDiv.textContent = 'Dia 27 de Ramadan — Laylat al-Qadr';
+      wrapper.appendChild(qadrDiv);
+    }
+
     // ── Footer ───────────────────────────────────────────────────────────
     const footer = document.createElement('div');
-    footer.style.cssText = `margin-top:auto; padding-top:8px; border-top:1px solid #000; text-align:center; font-size:7px;`;
-    if (city.fundacion) {
-      footer.innerHTML += `<div style="font-weight:700; font-size:9px; margin-bottom:2px;">${city.fundacion.toUpperCase()}</div>`;
+    footer.style.cssText = `margin-top:auto; padding-top:4px; text-align:center; font-family:Helvetica,Arial,sans-serif;`;
+
+    // Decorative lines
+    footer.innerHTML += `<div style="border-top:2px solid ${accCss}; margin-bottom:1px;"></div>`;
+    footer.innerHTML += `<div style="border-top:1px solid ${priCss}; margin-bottom:3px;"></div>`;
+
+    footer.innerHTML += `<div style="font-size:7px; color:#444; margin-bottom:2px;">${city.geo}</div>`;
+    if (city.contacto) {
+      footer.innerHTML += `<div style="font-size:7px; color:#333; margin-bottom:1px;">${city.contacto}</div>`;
     }
-    let contact = '';
-    if (city.contacto) contact += city.contacto + ' | ';
-    if (city.web) contact += city.web;
-    if (contact) footer.innerHTML += `<div style="opacity:0.7; margin-bottom:4px;">${contact}</div>`;
-    footer.innerHTML += `<div style="opacity:0.6; margin-bottom:6px; font-style:italic;">* Horarios calculados matemáticamente bajo jurisprudencia Maliki (Ángulos: 18° / 17°) para ${city.nombre_es.toLowerCase().startsWith('mezquita') ? city.nombre_es : `Mezquita de ${city.nombre_es}`}.</div>`;
+    if (city.web) {
+      footer.innerHTML += `<div style="font-size:7px; color:${secCss}; margin-bottom:1px;">${city.web}</div>`;
+    }
+    footer.innerHTML += `<div style="font-size:6.5px; color:#aaa; margin-bottom:4px;">Calculado con rigor astronomico · Fiqh Maliki · Angulo de crepusculo 18°</div>`;
 
     const watermark = document.createElement('div');
-    watermark.style.cssText = `background:#000; color:#fff; text-align:center; padding:5px 0; font-size:8px; font-weight:700; letter-spacing:1px;`;
+    watermark.style.cssText = `background:#000; color:#fff; text-align:center; padding:4px 0; font-size:7px; font-weight:700; letter-spacing:0.5px; font-family:Helvetica,Arial,sans-serif;`;
     watermark.textContent = 'DATOS PROPORCIONADOS POR FALAK QAYRAN';
     footer.appendChild(watermark);
     wrapper.appendChild(footer);
@@ -131,13 +183,12 @@ export const generatePNG = async (
     const dataUrl = await toPng(wrapper, {
       width: A4_W,
       height: A4_H,
-      pixelRatio: 2, // Retina quality
+      pixelRatio: 2,
       backgroundColor: '#ffffff',
     });
 
     document.body.removeChild(wrapper);
 
-    // Trigger download
     const link = document.createElement('a');
     link.download = `FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.png`;
     link.href = dataUrl;
