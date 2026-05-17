@@ -77,9 +77,9 @@ export const generatePNG = async (
       padding: ${MARGIN}px;
       display: flex;
       flex-direction: column;
-      transform: translateX(-110%);
       opacity: 0.01;
       pointer-events: none;
+      z-index: 999999;
     `;
     wrapper.style.border = '3px solid #000';
 
@@ -188,13 +188,12 @@ export const generatePNG = async (
     // Esperar layout completo del navegador antes de capturar
     await new Promise(resolve => requestAnimationFrame(resolve));
     await new Promise(resolve => requestAnimationFrame(resolve));
-    await new Promise(resolve => setTimeout(resolve, 120));
+    await new Promise(resolve => setTimeout(resolve, 250));
 
     // ── Capture ──────────────────────────────────────────────────────────
     const dataUrl = await toPng(wrapper, {
       pixelRatio: 2,
       backgroundColor: '#ffffff',
-      skipFonts: true,
     });
 
     document.body.removeChild(wrapper);
