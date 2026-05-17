@@ -84,7 +84,7 @@ export const generatePNG = async (
     header.innerHTML = `
       <div style="font-family: Helvetica, Arial, sans-serif; font-size:22px; font-weight:900; letter-spacing:-0.5px; margin-bottom:2px;">${title}</div>
       <div style="font-family: Helvetica, Arial, sans-serif; font-size:9px; color:#333; margin-bottom:3px;">Parte de los momentos del salah correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)</div>
-      <div style="font-family: Helvetica, Arial, sans-serif; font-size:9px; color:#333;">para la ciudad de ${city.nombre_es} y cercanias.</div>
+      <div style="font-family: Helvetica, Arial, sans-serif; font-size:9px; color:#333;">para la ciudad de ${city.nombre_es} y cercanías.</div>
     `;
     wrapper.appendChild(header);
 
@@ -141,8 +141,8 @@ export const generatePNG = async (
     // ── Dia de Observacion ──
     if (dia28Fecha) {
       const obsDiv = document.createElement('div');
-      obsDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
-      obsDiv.textContent = `Dia de observacion: ${dia28Fecha}`;
+    obsDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
+    obsDiv.textContent = `Día de observación: ${dia28Fecha}`;
       wrapper.appendChild(obsDiv);
     }
 
@@ -169,7 +169,7 @@ export const generatePNG = async (
     if (city.web) {
       footer.innerHTML += `<div style="font-size:7px; color:${secCss}; margin-bottom:1px;">${city.web}</div>`;
     }
-    footer.innerHTML += `<div style="font-size:6.5px; color:#aaa; margin-bottom:4px;">Calculado con rigor astronomico · Fiqh Maliki · Angulo de crepusculo 18°</div>`;
+    footer.innerHTML += `<div style="font-size:6.5px; color:#aaa; margin-bottom:4px;">Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18°</div>`;
 
     const watermark = document.createElement('div');
     watermark.style.cssText = `background:#000; color:#fff; text-align:center; padding:4px 0; font-size:7px; font-weight:700; letter-spacing:0.5px; font-family:Helvetica,Arial,sans-serif;`;

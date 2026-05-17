@@ -58,7 +58,7 @@ export const generateXLSX = (
     tableData.push([]);
 
     if (dia28Fecha) {
-      tableData.push(['Dia de observacion:', dia28Fecha, '', '', '', '', '', '']);
+      tableData.push(['Día de observación:', dia28Fecha, '', '', '', '', '', '']);
     }
 
     if (hasQadr) {
@@ -69,7 +69,7 @@ export const generateXLSX = (
     tableData.push([city.geo, '', '', '', '', '', '', '']);
     if (city.contacto) tableData.push([city.contacto, '', '', '', '', '', '', '']);
     if (city.web) tableData.push([city.web, '', '', '', '', '', '', '']);
-    tableData.push(['Calculado con rigor astronomico · Fiqh Maliki · Angulo de crepusculo 18°', '', '', '', '', '', '', '']);
+    tableData.push(['Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18°', '', '', '', '', '', '', '']);
     tableData.push(['DATOS PROPORCIONADOS POR FALAK QAYRAN', '', '', '', '', '', '', '']);
 
     const ws = XLSX.utils.aoa_to_sheet(tableData);

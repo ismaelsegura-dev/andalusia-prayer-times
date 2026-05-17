@@ -23,7 +23,7 @@ const getHijriMonthShort = (monthIndex: number): string => {
     "J.A.", "J.T.", "Raj.", "Sha.",
     "Ram.", "Shw.", "D.Q.", "D.H."
   ];
-  return shorts[monthIndex - 1] ?? "Dia";
+  return shorts[monthIndex - 1] ?? "Día";
 };
 
 export const generateHighFidelityPDF = async (
@@ -43,40 +43,38 @@ export const generateHighFidelityPDF = async (
     const daysInMonth = getHijriMonthLength(selectedHijriYear, selectedHijriMonth, validatedMonths);
 
     const doc = new jsPDF('p', 'mm', 'a4');
-    const w = doc.internal.pageSize.getWidth();
-    const h = doc.internal.pageSize.getHeight();
+    const w = doc.internal.pageSize.getWidth();   // 210
+    const h = doc.internal.pageSize.getHeight();  // 297
 
     const rgbPri = hexToRgb(city.col_pri);
     const rgbSec = hexToRgb(city.col_sec);
     const rgbAcc = hexToRgb(city.col_acc);
 
-    const margin = 15;
+    const margin = 14;
+    const contentW = w - margin * 2; // 182 mm
 
-    // ── 1. MARCO EXTERIOR BRUTALISTA ──
+    // ── 1. MARCO EXTERIOR ──
     doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(1.5);
-    doc.rect(margin, margin, w - margin * 2, h - margin * 2, 'S');
+    doc.setLineWidth(1.2);
+    doc.rect(margin, margin, contentW, h - margin * 2, 'S');
 
-    // ── 2. CABECERA / FUNDACION ──
-    let currentY = margin + 10;
+    // ── 2. CABECERA ──
+    let y = margin + 7;
 
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(16);
-    const title = city.fundacion ? city.fundacion.toUpperCase() : city.nombre_es.toUpperCase();
-    doc.text(title, w / 2, currentY, { align: 'center' });
-    currentY += 7;
+    doc.setFontSize(13);
+    doc.text((city.fundacion || city.nombre_es).toUpperCase(), w / 2, y, { align: 'center' });
+    y += 5;
 
-    // Linea decorativa bajo fundacion
-    doc.setLineWidth(1);
+    doc.setLineWidth(0.7);
     doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
-    doc.line(margin + 10, currentY, w - margin - 10, currentY);
-    currentY += 5;
+    doc.line(margin + 10, y, w - margin - 10, y);
+    y += 3.5;
 
-    // ── 3. TEXTO DESCRIPTIVO DEL DOCUMENTO ──
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(50, 50, 50);
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
 
     const mesHijri = HIJRI_MONTHS[selectedHijriMonth - 1];
     const mesShort = getHijriMonthShort(selectedHijriMonth);
@@ -84,14 +82,14 @@ export const generateHighFidelityPDF = async (
     const anioGregEnd = addDays(startDate, daysInMonth - 1).getFullYear();
     const anioGregStr = anioGregStart === anioGregEnd ? String(anioGregStart) : `${anioGregStart}/${anioGregEnd}`;
 
-    doc.text('Parte de los momentos del salah correspondiente', w / 2, currentY, { align: 'center' });
-    currentY += 4.2;
-    doc.text(`al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)`, w / 2, currentY, { align: 'center' });
-    currentY += 4.2;
-    doc.text(`para la ciudad de ${city.nombre_es} y cercanias.`, w / 2, currentY, { align: 'center' });
-    currentY += 6;
+    doc.text('Parte de los momentos del salah correspondiente', w / 2, y, { align: 'center' });
+    y += 3.8;
+    doc.text(`al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)`, w / 2, y, { align: 'center' });
+    y += 3.8;
+    doc.text(`para la ciudad de ${city.nombre_es} y cercanías.`, w / 2, y, { align: 'center' });
+    y += 5;
 
-    // ── 4. TABLA DE HORARIOS ──
+    // ── 3. TABLA DE HORARIOS (centrada, ocupa todo el ancho disponible) ──
     const tableBody: (string | number)[][] = [];
     let dia28Fecha = '';
     let hasQadr = false;
@@ -108,117 +106,111 @@ export const generateHighFidelityPDF = async (
     autoTable(doc, {
       head: [[mesShort, 'Fecha', 'Fajr', 'Shuruq', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']],
       body: tableBody,
-      startY: currentY,
+      startY: y,
       theme: 'grid',
       styles: {
         font: 'courier',
-        fontSize: 8,
+        fontSize: 7.4,
         halign: 'center',
-        cellPadding: 1,
+        cellPadding: 0.6,
         textColor: [0, 0, 0],
         lineColor: [0, 0, 0],
-        lineWidth: 0.4
+        lineWidth: 0.3
       },
       headStyles: {
         fillColor: rgbPri,
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center',
-        fontSize: 8.5
+        fontSize: 8
       },
       alternateRowStyles: { fillColor: [240, 240, 240] },
       columnStyles: {
-        0: { cellWidth: 12, fontStyle: 'bold' },
-        1: { cellWidth: 28, halign: 'left' },
-        2: { cellWidth: 18 },
-        3: { cellWidth: 18, textColor: [120, 120, 120] },
-        4: { cellWidth: 18 },
-        5: { cellWidth: 18 },
-        6: { cellWidth: 20, fontStyle: 'bold', textColor: rgbSec },
-        7: { cellWidth: 20 }
+        0: { fontStyle: 'bold', halign: 'center' },
+        1: { halign: 'left' },
+        3: { textColor: [130, 130, 130] },
+        6: { fontStyle: 'bold', textColor: rgbSec }
       },
-      margin: { top: currentY, left: margin + 2, right: margin + 2 },
+      margin: { left: margin + 3, right: margin + 3 },
+      tableWidth: 'auto',
       pageBreak: 'avoid',
-      showFoot: 'never',
-      tableWidth: 'auto'
+      showFoot: 'never'
     });
 
-    let finalY = (doc as any).lastAutoTable.finalY + 5;
+    let finalY = (doc as any).lastAutoTable.finalY + 4;
 
-    // ── 5. DIA DE OBSERVACION (dia 28 del mes) ──
+    // ── 4. DÍA DE OBSERVACIÓN ──
     if (dia28Fecha) {
       doc.setFillColor(255, 251, 240);
       doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(margin + 5, finalY, w - margin * 2 - 10, 6, 1.5, 1.5, 'FD');
+      doc.setLineWidth(0.4);
+      doc.roundedRect(margin + 5, finalY, contentW - 10, 5.5, 1.2, 1.2, 'FD');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
+      doc.setFontSize(7.2);
       doc.setTextColor(123, 88, 0);
-      doc.text(`Dia de observacion: ${dia28Fecha}`, w / 2, finalY + 4, { align: 'center' });
-      finalY += 9;
+      doc.text(`Día de observación: ${dia28Fecha}`, w / 2, finalY + 3.5, { align: 'center' });
+      finalY += 8;
     }
 
-    // ── 6. LEYENDA LAYLAT AL-QADR (solo Ramadan) ──
+    // ── 5. LEYENDA LAYLAT AL-QADR ──
     if (hasQadr) {
       doc.setFillColor(255, 251, 240);
       doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(margin + 5, finalY, w - margin * 2 - 10, 6, 1.5, 1.5, 'FD');
+      doc.setLineWidth(0.4);
+      doc.roundedRect(margin + 5, finalY, contentW - 10, 5.5, 1.2, 1.2, 'FD');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
+      doc.setFontSize(7.2);
       doc.setTextColor(123, 88, 0);
-      doc.text('Dia 27 de Ramadan — Laylat al-Qadr', w / 2, finalY + 4, { align: 'center' });
-      finalY += 9;
+      doc.text('Día 27 de Ramadán — Laylat al-Qadr', w / 2, finalY + 3.5, { align: 'center' });
+      finalY += 8;
     }
 
-    // ── 7. PIE DE PAGINA TECNICO ──
-    // Asegurar que no solape con el sello
-    const stampH = 6;
+    // ── 6. PIE TÉCNICO ──
+    const stampH = 5.5;
     const stampY = h - margin - stampH - 2;
-    const minFooterY = stampY - 28;
-    const footerY = finalY < minFooterY ? finalY : minFooterY;
+    const minFooterTop = stampY - 26;
+    const footerTop = Math.min(finalY + 2, minFooterTop);
 
-    // Lineas decorativas dobles
+    // Líneas decorativas
     doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
-    doc.setLineWidth(1.2);
-    doc.line(margin + 10, footerY + 14, w - margin - 10, footerY + 14);
+    doc.setLineWidth(1);
+    doc.line(margin + 10, footerTop + 13, w - margin - 10, footerTop + 13);
     doc.setDrawColor(rgbPri[0], rgbPri[1], rgbPri[2]);
-    doc.setLineWidth(0.5);
-    doc.line(margin + 10, footerY + 12.5, w - margin - 10, footerY + 12.5);
+    doc.setLineWidth(0.4);
+    doc.line(margin + 10, footerTop + 11.5, w - margin - 10, footerTop + 11.5);
 
     doc.setTextColor(60, 60, 60);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.8);
-    doc.text(city.geo, w / 2, footerY + 9, { align: 'center' });
+    doc.setFontSize(6.5);
+    doc.text(city.geo, w / 2, footerTop + 8.5, { align: 'center' });
 
     if (city.contacto) {
       doc.setTextColor(40, 40, 40);
-      doc.setFontSize(6.8);
-      doc.text(city.contacto, w / 2, footerY + 5.5, { align: 'center' });
+      doc.setFontSize(6.5);
+      doc.text(city.contacto, w / 2, footerTop + 5, { align: 'center' });
     }
-
     if (city.web) {
       doc.setTextColor(rgbSec[0], rgbSec[1], rgbSec[2]);
-      doc.setFontSize(6.8);
-      doc.text(city.web, w / 2, footerY + 2, { align: 'center' });
+      doc.setFontSize(6.5);
+      doc.text(city.web, w / 2, footerTop + 1.5, { align: 'center' });
     }
 
     doc.setTextColor(150, 150, 150);
-    doc.setFontSize(6);
+    doc.setFontSize(5.8);
     doc.text(
-      'Calculado con rigor astronomico · Fiqh Maliki · Angulo de crepusculo 18°',
+      'Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18°',
       w / 2,
-      footerY - 1.5,
+      footerTop - 2,
       { align: 'center' }
     );
 
-    // ── 8. SELLO FALAK QAYRAN ──
+    // ── 7. SELLO ──
     doc.setFillColor(0, 0, 0);
-    doc.rect(margin + 5, stampY, w - margin * 2 - 10, stampH, 'F');
+    doc.rect(margin + 5, stampY, contentW - 10, stampH, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('DATOS PROPORCIONADOS POR FALAK QAYRAN', w / 2, stampY + 4, { align: 'center' });
+    doc.setFontSize(7.5);
+    doc.text('DATOS PROPORCIONADOS POR FALAK QAYRAN', w / 2, stampY + 3.5, { align: 'center' });
 
     doc.save(`FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2, '0')}.pdf`);
   } catch (e) {
