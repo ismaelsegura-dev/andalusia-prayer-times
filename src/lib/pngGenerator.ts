@@ -15,7 +15,7 @@ function hexToCssRgb(hex: string) {
 /** Abreviatura del mes hijri */
 function getHijriShort(monthIndex: number) {
   const shorts = ["Muh.","Saf.","R.A.","R.T.","J.A.","J.T.","Raj.","Sha.","Ram.","Shw.","D.Q.","D.H."];
-  return shorts[monthIndex - 1] ?? "Dia";
+  return shorts[monthIndex - 1] ?? "Día";
 }
 
 export const generatePNG = async (
@@ -65,8 +65,11 @@ export const generatePNG = async (
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = `
-      position: fixed; left: -9999px; top: -9999px;
-      width: ${A4_W}px; height: ${A4_H}px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: ${A4_W}px;
+      height: ${A4_H}px;
       background: #fff;
       font-family: 'Courier New', Courier, monospace;
       color: #000;
@@ -74,6 +77,8 @@ export const generatePNG = async (
       padding: ${MARGIN}px;
       display: flex;
       flex-direction: column;
+      z-index: -1;
+      visibility: hidden;
     `;
     wrapper.style.border = '3px solid #000';
 
@@ -150,7 +155,7 @@ export const generatePNG = async (
     if (selectedHijriMonth === 9 && rows.some(r => r.isQadr)) {
       const qadrDiv = document.createElement('div');
       qadrDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
-      qadrDiv.textContent = 'Dia 27 de Ramadan — Laylat al-Qadr';
+      qadrDiv.textContent = 'Día 27 de Ramadán — Laylat al-Qadr';
       wrapper.appendChild(qadrDiv);
     }
 
@@ -179,10 +184,12 @@ export const generatePNG = async (
 
     document.body.appendChild(wrapper);
 
+    // Esperar layout del navegador antes de capturar
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
     // ── Capture ──────────────────────────────────────────────────────────
     const dataUrl = await toPng(wrapper, {
-      width: A4_W,
-      height: A4_H,
       pixelRatio: 2,
       backgroundColor: '#ffffff',
     });
