@@ -1,4 +1,3 @@
-import { toPng } from 'html-to-image';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { calcularHorariosOracion } from './prayerTimesEngine';
@@ -6,10 +5,10 @@ import { CITIES } from './cities';
 import { HIJRI_MONTHS, getHijriMonthStart, getHijriMonthLength } from './lunar-calendar';
 import { useStore } from '../store';
 
-/** Hex → CSS rgb() */
-function hexToCssRgb(hex: string) {
+/** Hex → [r, g, b] */
+function hexToRgb(hex: string): [number, number, number] {
   const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return r ? `rgb(${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)})` : '#000';
+  return r ? [parseInt(r[1], 16), parseInt(r[2], 16), parseInt(r[3], 16)] : [0, 0, 0];
 }
 
 /** Abreviatura del mes hijri */
@@ -54,156 +53,224 @@ export const generatePNG = async (
       });
     }
 
-    // ── Create off-screen container ─────────────────────────────────────
-    const A4_W = 794;
-    const A4_H = 1123;
-    const MARGIN = 28;
-    const priCss = hexToCssRgb(city.col_pri);
-    const secCss = hexToCssRgb(city.col_sec);
-    const accCss = hexToCssRgb(city.col_acc);
+    // ── Canvas setup (A4 @ 2x) ─────────────────────────────────────────
+    const SCALE = 2;
+    const W = 794 * SCALE;
+    const MARGIN = 28 * SCALE;
+    const COLS = 8;
+    const COL_W = (W - MARGIN * 2) / COLS;
 
-    // Wrapper invisible pero renderizable: posicionado fuera del viewport
-    // SIN opacity (causa página en blanco en Chromium con html-to-image)
-    const wrapper = document.createElement('div');
-    wrapper.id = 'png-capture-wrapper';
-    Object.assign(wrapper.style, {
-      position: 'absolute',
-      left: '-10000px',
-      top: '0',
-      width: `${A4_W}px`,
-      height: `${A4_H}px`,
-      background: '#fff',
-      fontFamily: "'Courier New', Courier, monospace",
-      color: '#000',
-      boxSizing: 'border-box',
-      padding: `${MARGIN}px`,
-      display: 'flex',
-      flexDirection: 'column',
-      border: '3px solid #000',
-      overflow: 'hidden',
-    });
+    // Calculate total height needed
+    const HEADER_H = 80;
+    const ROW_H = 28;
+    const FOOTER_H = 120;
+    const OBS_H = 30;
+    const totalH = MARGIN + HEADER_H + (daysInMonth * ROW_H) + (dia29Fecha ? OBS_H : 0) + FOOTER_H;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = totalH;
+    const ctx = canvas.getContext('2d')!;
+
+    const rgbPri = hexToRgb(city.col_pri);
+    const rgbSec = hexToRgb(city.col_sec);
+    const rgbAcc = hexToRgb(city.col_acc);
+
+    // ── Background ──────────────────────────────────────────────────────
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, totalH);
+
+    // ── Border ──────────────────────────────────────────────────────────
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3 * SCALE;
+    ctx.strokeRect(MARGIN / 2, MARGIN / 2, W - MARGIN, totalH - MARGIN);
+
+    let y = MARGIN + 10;
 
     // ── Header ──────────────────────────────────────────────────────────
-    const header = document.createElement('div');
-    header.style.cssText = `text-align:center; border-bottom: 2px solid ${accCss}; padding-bottom: 6px; margin-bottom: 6px;`;
     const title = city.fundacion ? city.fundacion.toUpperCase() : city.nombre_es.toUpperCase();
-    header.innerHTML = `
-      <div style="font-family: Helvetica, Arial, sans-serif; font-size:22px; font-weight:900; letter-spacing:-0.5px; margin-bottom:2px;">${title}</div>
-      <div style="font-family: Helvetica, Arial, sans-serif; font-size:9px; color:#333; margin-bottom:3px;">Parte de los momentos del salah correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)</div>
-      <div style="font-family: Helvetica, Arial, sans-serif; font-size:9px; color:#333;">para la ciudad de ${city.nombre_es} y cercanías.</div>
-    `;
-    wrapper.appendChild(header);
+    ctx.fillStyle = '#000000';
+    ctx.font = `bold ${22 * SCALE}px Helvetica, Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(title, W / 2, y);
+    y += 24 * SCALE;
 
-    // ── Table ────────────────────────────────────────────────────────────
-    const table = document.createElement('table');
-    const rowFontSize = daysInMonth > 28 ? '9px' : '9.5px';
-    table.style.cssText = `width:100%; border-collapse:collapse; font-size:${rowFontSize}; flex-shrink:0;`;
+    ctx.fillStyle = '#333333';
+    ctx.font = `${9 * SCALE}px Helvetica, Arial, sans-serif`;
+    ctx.fillText(`Parte de los momentos del salah correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)`, W / 2, y);
+    y += 14 * SCALE;
+    ctx.fillText(`para la ciudad de ${city.nombre_es} y cercanías.`, W / 2, y);
+    y += 14 * SCALE;
 
-    const thead = document.createElement('thead');
-    const headRow = document.createElement('tr');
-    [mesShort,'Fecha','Fajr','Shuruq','Dhuhr','Asr','Maghrib','Isha'].forEach((h) => {
-      const th = document.createElement('th');
-      th.textContent = h;
-      let extra = '';
-      if (h === 'Maghrib') extra = `color:${secCss};`;
-      if (h === 'Shuruq') extra = `color:#888;`;
-      th.style.cssText = `background:${priCss}; color:#fff; padding:3px 2px; border:1px solid #000; text-align:center; font-weight:700; letter-spacing:0.5px; font-family:Courier New,monospace; ${extra}`;
-      headRow.appendChild(th);
+    // Accent line
+    ctx.strokeStyle = `rgb(${rgbAcc.join(',')})`;
+    ctx.lineWidth = 2 * SCALE;
+    ctx.beginPath();
+    ctx.moveTo(MARGIN + 20, y);
+    ctx.lineTo(W - MARGIN - 20, y);
+    ctx.stroke();
+    y += 16 * SCALE;
+
+    // ── Table header ────────────────────────────────────────────────────
+    const headers = [mesShort, 'Fecha', 'Fajr', 'Shuruq', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    const headerBg = `rgb(${rgbPri.join(',')})`;
+
+    ctx.fillStyle = headerBg;
+    ctx.fillRect(MARGIN, y, W - MARGIN * 2, ROW_H);
+
+    ctx.font = `bold ${11 * SCALE}px 'Courier New', Courier, monospace`;
+    ctx.textAlign = 'center';
+
+    headers.forEach((h, ci) => {
+      const cx = MARGIN + ci * COL_W + COL_W / 2;
+      const cy = y + ROW_H / 2 + 4 * SCALE;
+
+      if (h === 'Maghrib') {
+        ctx.fillStyle = `rgb(${rgbSec.join(',')})`;
+      } else if (h === 'Shuruq') {
+        ctx.fillStyle = '#888888';
+      } else {
+        ctx.fillStyle = '#ffffff';
+      }
+      ctx.fillText(h, cx, cy);
     });
-    thead.appendChild(headRow);
-    table.appendChild(thead);
 
-    const tbody = document.createElement('tbody');
-    rows.forEach((row, idx) => {
-      const tr = document.createElement('tr');
-      const bg = row.isQadr ? '#FFFBF0' : (idx % 2 === 1 ? '#f5f5f5' : '#fff');
+    // Header border
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1 * SCALE;
+    ctx.strokeRect(MARGIN, y, W - MARGIN * 2, ROW_H);
+    y += ROW_H;
+
+    // ── Table rows ──────────────────────────────────────────────────────
+    ctx.font = `${11 * SCALE}px 'Courier New', Courier, monospace`;
+
+    rows.forEach((row, ri) => {
+      const bg = row.isQadr ? '#FFFBF0' : (ri % 2 === 1 ? '#f5f5f5' : '#ffffff');
+      ctx.fillStyle = bg;
+      ctx.fillRect(MARGIN, y, W - MARGIN * 2, ROW_H);
+
       row.vals.forEach((cell, ci) => {
-        const td = document.createElement('td');
-        td.textContent = cell;
-        let cellStyle = `padding:2px 2px; border:1px solid #000; text-align:center; background:${bg}; font-family:Courier New,monospace;`;
+        const cx = MARGIN + ci * COL_W + COL_W / 2;
+        const cy = y + ROW_H / 2 + 4 * SCALE;
+
         if (ci === 0) {
-          cellStyle += ` font-weight:bold; color:${row.isQadr ? '#7B5800' : priCss};`;
+          ctx.fillStyle = row.isQadr ? '#7B5800' : `rgb(${rgbPri.join(',')})`;
+          ctx.font = `bold ${11 * SCALE}px 'Courier New', Courier, monospace`;
+        } else if (ci === 1) {
+          ctx.fillStyle = '#333333';
+          ctx.textAlign = 'left';
+          ctx.fillText(cell, MARGIN + ci * COL_W + 6 * SCALE, cy);
+          ctx.textAlign = 'center';
+          // Draw cell border
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 0.5 * SCALE;
+          ctx.strokeRect(MARGIN + ci * COL_W, y, COL_W, ROW_H);
+          return;
+        } else if (ci === 3) {
+          ctx.fillStyle = '#888888';
+          ctx.font = `${11 * SCALE}px 'Courier New', Courier, monospace`;
+        } else if (ci === 6) {
+          ctx.fillStyle = `rgb(${rgbSec.join(',')})`;
+          ctx.font = `bold ${11 * SCALE}px 'Courier New', Courier, monospace`;
+        } else {
+          ctx.fillStyle = '#000000';
+          ctx.font = `${11 * SCALE}px 'Courier New', Courier, monospace`;
         }
-        if (ci === 1) {
-          cellStyle += ` text-align:left; padding-left:4px; color:#333;`;
-        }
-        if (ci === 3) {
-          cellStyle += ` color:#888;`;
-        }
-        if (ci === 6) {
-          cellStyle += ` font-weight:bold; color:${secCss};`;
-        }
-        if (row.isQadr && ci === 0) {
-          cellStyle += ` border-left:3px solid ${accCss};`;
-        }
-        td.style.cssText = cellStyle;
-        tr.appendChild(td);
+
+        ctx.fillText(cell, cx, cy);
+
+        // Cell border
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 0.5 * SCALE;
+        ctx.strokeRect(MARGIN + ci * COL_W, y, COL_W, ROW_H);
       });
-      tbody.appendChild(tr);
+
+      y += ROW_H;
     });
-    table.appendChild(tbody);
-    wrapper.appendChild(table);
 
-    // ── Día de Observación ──
+    // ── Día de Observación ──────────────────────────────────────────────
     if (dia29Fecha) {
-      const obsDiv = document.createElement('div');
-      obsDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
-      obsDiv.textContent = `Día de observación: ${dia29Fecha}`;
-      wrapper.appendChild(obsDiv);
+      y += 8 * SCALE;
+      const boxH = 26 * SCALE;
+      ctx.fillStyle = '#FFFBF0';
+      ctx.fillRect(MARGIN + 10, y, W - MARGIN * 2 - 20, boxH);
+      ctx.strokeStyle = `rgb(${rgbAcc.join(',')})`;
+      ctx.lineWidth = 1 * SCALE;
+      ctx.strokeRect(MARGIN + 10, y, W - MARGIN * 2 - 20, boxH);
+      ctx.fillStyle = '#7B5800';
+      ctx.font = `bold ${10 * SCALE}px Helvetica, Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Día de observación: ${dia29Fecha}`, W / 2, y + boxH / 2 + 3.5 * SCALE);
+      y += boxH + 8 * SCALE;
     }
 
-    // ── Laylat al-Qadr (solo Ramadan) ──
+    // ── Laylat al-Qadr ──────────────────────────────────────────────────
     if (selectedHijriMonth === 9 && rows.some(r => r.isQadr)) {
-      const qadrDiv = document.createElement('div');
-      qadrDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
-      qadrDiv.textContent = 'Día 27 de Ramadán — Laylat al-Qadr';
-      wrapper.appendChild(qadrDiv);
+      const boxH = 26 * SCALE;
+      ctx.fillStyle = '#FFFBF0';
+      ctx.fillRect(MARGIN + 10, y, W - MARGIN * 2 - 20, boxH);
+      ctx.strokeStyle = `rgb(${rgbAcc.join(',')})`;
+      ctx.lineWidth = 1 * SCALE;
+      ctx.strokeRect(MARGIN + 10, y, W - MARGIN * 2 - 20, boxH);
+      ctx.fillStyle = '#7B5800';
+      ctx.font = `bold ${10 * SCALE}px Helvetica, Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Día 27 de Ramadán — Laylat al-Qadr', W / 2, y + boxH / 2 + 3.5 * SCALE);
+      y += boxH + 8 * SCALE;
     }
 
-    // ── Footer ───────────────────────────────────────────────────────────
-    const footer = document.createElement('div');
-    footer.style.cssText = `margin-top:auto; padding-top:4px; text-align:center; font-family:Helvetica,Arial,sans-serif;`;
+    // ── Footer ──────────────────────────────────────────────────────────
+    y += 10 * SCALE;
 
-    footer.innerHTML += `<div style="border-top:2px solid ${accCss}; margin-bottom:1px;"></div>`;
-    footer.innerHTML += `<div style="border-top:1px solid ${priCss}; margin-bottom:3px;"></div>`;
+    // Decorative lines
+    ctx.strokeStyle = `rgb(${rgbAcc.join(',')})`;
+    ctx.lineWidth = 2 * SCALE;
+    ctx.beginPath();
+    ctx.moveTo(MARGIN + 20, y);
+    ctx.lineTo(W - MARGIN - 20, y);
+    ctx.stroke();
+    y += 4 * SCALE;
 
-    footer.innerHTML += `<div style="font-size:7px; color:#444; margin-bottom:2px;">${city.geo}</div>`;
+    ctx.strokeStyle = `rgb(${rgbPri.join(',')})`;
+    ctx.lineWidth = 1 * SCALE;
+    ctx.beginPath();
+    ctx.moveTo(MARGIN + 20, y);
+    ctx.lineTo(W - MARGIN - 20, y);
+    ctx.stroke();
+    y += 10 * SCALE;
+
+    ctx.fillStyle = '#444444';
+    ctx.font = `${8 * SCALE}px Helvetica, Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(city.geo, W / 2, y);
+    y += 14 * SCALE;
+
     if (city.contacto) {
-      footer.innerHTML += `<div style="font-size:7px; color:#333; margin-bottom:1px;">${city.contacto}</div>`;
+      ctx.fillStyle = '#333333';
+      ctx.fillText(city.contacto, W / 2, y);
+      y += 12 * SCALE;
     }
     if (city.web) {
-      footer.innerHTML += `<div style="font-size:7px; color:${secCss}; margin-bottom:1px;">${city.web}</div>`;
-    }
-    footer.innerHTML += `<div style="font-size:6.5px; color:#aaa; margin-bottom:4px;">Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18°</div>`;
-
-    const watermark = document.createElement('div');
-    watermark.style.cssText = `background:#000; color:#fff; text-align:center; padding:4px 0; font-size:7px; font-weight:700; letter-spacing:0.5px; font-family:Helvetica,Arial,sans-serif;`;
-    watermark.textContent = 'DATOS PROPORCIONADOS POR FALAK QAYRAN';
-    footer.appendChild(watermark);
-    wrapper.appendChild(footer);
-
-    document.body.appendChild(wrapper);
-
-    // Esperar a que el navegador haga layout completo
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // ── Capture ──────────────────────────────────────────────────────────
-    const dataUrl = await toPng(wrapper, {
-      pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      cacheBust: true,
-      width: A4_W,
-      height: A4_H,
-    });
-
-    // Limpiar DOM
-    if (document.body.contains(wrapper)) {
-      document.body.removeChild(wrapper);
+      ctx.fillStyle = `rgb(${rgbSec.join(',')})`;
+      ctx.fillText(city.web, W / 2, y);
+      y += 12 * SCALE;
     }
 
-    // Descargar
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = `${7 * SCALE}px Helvetica, Arial, sans-serif`;
+    ctx.fillText('Calculado con rigor astronómico · Fiqh Maliki · Ángulo de crepúsculo 18°', W / 2, y);
+    y += 16 * SCALE;
+
+    // Watermark
+    const wmH = 22 * SCALE;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(MARGIN + 10, y, W - MARGIN * 2 - 20, wmH);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${9 * SCALE}px Helvetica, Arial, sans-serif`;
+    ctx.fillText('DATOS PROPORCIONADOS POR FALAK QAYRAN', W / 2, y + wmH / 2 + 3 * SCALE);
+
+    // ── Download ────────────────────────────────────────────────────────
+    const dataUrl = canvas.toDataURL('image/png');
     const link = document.createElement('a');
     link.download = `FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.png`;
     link.href = dataUrl;
