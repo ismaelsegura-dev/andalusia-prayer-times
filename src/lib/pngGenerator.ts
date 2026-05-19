@@ -54,34 +54,34 @@ export const generatePNG = async (
       });
     }
 
-    // ── Create off-screen container (A4 @ 96dpi → 794×1123px) ───────────
+    // ── Create off-screen container ─────────────────────────────────────
     const A4_W = 794;
     const A4_H = 1123;
     const MARGIN = 28;
-    const priColor = city.col_pri;
-    const priCss = hexToCssRgb(priColor);
+    const priCss = hexToCssRgb(city.col_pri);
     const secCss = hexToCssRgb(city.col_sec);
     const accCss = hexToCssRgb(city.col_acc);
 
+    // Wrapper invisible pero renderizable: posicionado fuera del viewport
+    // SIN opacity (causa página en blanco en Chromium con html-to-image)
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: ${A4_W}px;
-      height: ${A4_H}px;
-      background: #fff;
-      font-family: 'Courier New', Courier, monospace;
-      color: #000;
-      box-sizing: border-box;
-      padding: ${MARGIN}px;
-      display: flex;
-      flex-direction: column;
-      opacity: 0.01;
-      pointer-events: none;
-      z-index: 999999;
-    `;
-    wrapper.style.border = '3px solid #000';
+    wrapper.id = 'png-capture-wrapper';
+    Object.assign(wrapper.style, {
+      position: 'absolute',
+      left: '-10000px',
+      top: '0',
+      width: `${A4_W}px`,
+      height: `${A4_H}px`,
+      background: '#fff',
+      fontFamily: "'Courier New', Courier, monospace",
+      color: '#000',
+      boxSizing: 'border-box',
+      padding: `${MARGIN}px`,
+      display: 'flex',
+      flexDirection: 'column',
+      border: '3px solid #000',
+      overflow: 'hidden',
+    });
 
     // ── Header ──────────────────────────────────────────────────────────
     const header = document.createElement('div');
@@ -144,11 +144,11 @@ export const generatePNG = async (
     table.appendChild(tbody);
     wrapper.appendChild(table);
 
-    // ── Dia de Observacion ──
+    // ── Día de Observación ──
     if (dia29Fecha) {
       const obsDiv = document.createElement('div');
-    obsDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
-    obsDiv.textContent = `Día de observación: ${dia29Fecha}`;
+      obsDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
+      obsDiv.textContent = `Día de observación: ${dia29Fecha}`;
       wrapper.appendChild(obsDiv);
     }
 
@@ -164,7 +164,6 @@ export const generatePNG = async (
     const footer = document.createElement('div');
     footer.style.cssText = `margin-top:auto; padding-top:4px; text-align:center; font-family:Helvetica,Arial,sans-serif;`;
 
-    // Decorative lines
     footer.innerHTML += `<div style="border-top:2px solid ${accCss}; margin-bottom:1px;"></div>`;
     footer.innerHTML += `<div style="border-top:1px solid ${priCss}; margin-bottom:3px;"></div>`;
 
@@ -185,27 +184,36 @@ export const generatePNG = async (
 
     document.body.appendChild(wrapper);
 
-    // Esperar layout completo del navegador antes de capturar
+    // Esperar a que el navegador haga layout completo
     await new Promise(resolve => requestAnimationFrame(resolve));
     await new Promise(resolve => requestAnimationFrame(resolve));
-    await new Promise(resolve => setTimeout(resolve, 250));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // ── Capture ──────────────────────────────────────────────────────────
     const dataUrl = await toPng(wrapper, {
       pixelRatio: 2,
       backgroundColor: '#ffffff',
+      cacheBust: true,
+      width: A4_W,
+      height: A4_H,
     });
 
-    document.body.removeChild(wrapper);
+    // Limpiar DOM
+    if (document.body.contains(wrapper)) {
+      document.body.removeChild(wrapper);
+    }
 
+    // Descargar
     const link = document.createElement('a');
     link.download = `FALAK_QAYRAN_${city.id.toUpperCase()}_${selectedHijriYear}_${selectedHijriMonth.toString().padStart(2,'0')}.png`;
     link.href = dataUrl;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 
   } catch (e) {
-    console.error(e);
-    alert('Error generando PNG.');
+    console.error('PNG generation error:', e);
+    alert('Error generando PNG. Revisa la consola para más detalles.');
   } finally {
     setIsGenerating(false);
   }
