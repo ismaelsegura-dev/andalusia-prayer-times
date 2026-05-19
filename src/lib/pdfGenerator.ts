@@ -91,14 +91,14 @@ export const generateHighFidelityPDF = async (
 
     // ── 3. TABLA DE HORARIOS (centrada, ocupa todo el ancho disponible) ──
     const tableBody: (string | number)[][] = [];
-    let dia28Fecha = '';
+    let dia29Fecha = '';
     let hasQadr = false;
 
     for (let i = 0; i < daysInMonth; i++) {
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
       const fechaStr = format(d, 'EEE dd MMM', { locale: es }).toLowerCase();
-      if (i + 1 === 28) dia28Fecha = fechaStr;
+      if (i + 1 === 29) dia29Fecha = fechaStr;
       if (i + 1 === 27 && selectedHijriMonth === 9) hasQadr = true;
       tableBody.push([i + 1, fechaStr, p.fajr, p.shuruq, p.dhuhr, p.asr, p.maghrib, p.isha]);
     }
@@ -140,7 +140,7 @@ export const generateHighFidelityPDF = async (
     let finalY = (doc as any).lastAutoTable.finalY + 4;
 
     // ── 4. DÍA DE OBSERVACIÓN ──
-    if (dia28Fecha) {
+    if (dia29Fecha) {
       doc.setFillColor(255, 251, 240);
       doc.setDrawColor(rgbAcc[0], rgbAcc[1], rgbAcc[2]);
       doc.setLineWidth(0.4);
@@ -148,7 +148,7 @@ export const generateHighFidelityPDF = async (
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.2);
       doc.setTextColor(123, 88, 0);
-      doc.text(`Día de observación: ${dia28Fecha}`, w / 2, finalY + 3.5, { align: 'center' });
+      doc.text(`Día de observación: ${dia29Fecha}`, w / 2, finalY + 3.5, { align: 'center' });
       finalY += 8;
     }
 

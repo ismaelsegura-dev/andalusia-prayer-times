@@ -47,7 +47,8 @@ const MESES_VALIDADOS_POR_EMIR: Record<string, string> = {
   "1447-08": "2026-01-20", // Sha'ban 1447
   "1447-09": "2026-02-19", // Ramadán 1447
   "1447-10": "2026-03-20", // Shawwal 1447
-  "1447-11": "2026-04-19", // Dhu al-Qi'dah 1447 ← último mes validado
+  "1447-11": "2026-04-18", // Dhu al-Qi'dah 1447 (30 días)
+  "1447-12": "2026-05-18", // Dhu al-Hijjah 1447 ← último mes validado
 };
 
 export const useStore = create<AppState>()(
@@ -69,7 +70,7 @@ export const useStore = create<AppState>()(
       setSelectedHijriYear: (y: number) => set({ selectedHijriYear: y }),
     }),
     {
-      name: 'falak-qayran-storage', // Renombrado: limpia caché anterior
+      name: 'falak-qayran-storage-v2', // Cache bust: force refresh on all devices
       partialize: (state: AppState) => ({
         validatedMonths: state.validatedMonths,
         selectedCityId: state.selectedCityId
@@ -83,7 +84,7 @@ export const useStore = create<AppState>()(
           ...persistedState,
           validatedMonths: {
             ...MESES_VALIDADOS_POR_EMIR,
-            ...(persistedState.validatedMonths ?? {}),
+            ...(persistedState.validatedMonths ?? {})
           },
         };
       },

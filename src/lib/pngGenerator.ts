@@ -41,13 +41,13 @@ export const generatePNG = async (
 
     // ── Build rows ──────────────────────────────────────────────────────
     const rows: { vals: string[]; isQadr: boolean }[] = [];
-    let dia28Fecha = '';
+    let dia29Fecha = '';
     for (let i = 0; i < daysInMonth; i++) {
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
       const fechaStr = format(d, 'EEE dd MMM', { locale: es }).toLowerCase();
       const isQadr = (i + 1) === 27 && selectedHijriMonth === 9;
-      if (i + 1 === 28) dia28Fecha = fechaStr;
+      if (i + 1 === 29) dia29Fecha = fechaStr;
       rows.push({
         vals: [String(i + 1), fechaStr, p.fajr, p.shuruq, p.dhuhr, p.asr, p.maghrib, p.isha],
         isQadr
@@ -145,10 +145,10 @@ export const generatePNG = async (
     wrapper.appendChild(table);
 
     // ── Dia de Observacion ──
-    if (dia28Fecha) {
+    if (dia29Fecha) {
       const obsDiv = document.createElement('div');
     obsDiv.style.cssText = `margin-top:4px; padding:3px; background:#FFFBF0; border:1px solid ${accCss}; border-radius:2px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:8px; font-weight:bold; color:#7B5800;`;
-    obsDiv.textContent = `Día de observación: ${dia28Fecha}`;
+    obsDiv.textContent = `Día de observación: ${dia29Fecha}`;
       wrapper.appendChild(obsDiv);
     }
 
