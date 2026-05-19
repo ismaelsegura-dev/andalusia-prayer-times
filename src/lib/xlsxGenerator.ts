@@ -43,22 +43,22 @@ export const generateXLSX = (
     // Column headers
     tableData.push([mesShort, 'Fecha', 'Fajr', 'Shuruq', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']);
 
-    let dia28Fecha = '';
+    let dia29Fecha = '';
     let hasQadr = false;
 
     for (let i = 0; i < daysInMonth; i++) {
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
       const fechaStr = format(d, 'EEE dd MMM', { locale: es }).toLowerCase();
-      if (i + 1 === 28) dia28Fecha = fechaStr;
+      if (i + 1 === 29) dia29Fecha = fechaStr;
       if (i + 1 === 27 && selectedHijriMonth === 9) hasQadr = true;
       tableData.push([i + 1, fechaStr, p.fajr, p.shuruq, p.dhuhr, p.asr, p.maghrib, p.isha]);
     }
 
     tableData.push([]);
 
-    if (dia28Fecha) {
-      tableData.push(['Día de observación:', dia28Fecha, '', '', '', '', '', '']);
+    if (dia29Fecha) {
+      tableData.push(['Día de observación:', dia29Fecha, '', '', '', '', '', '']);
     }
 
     if (hasQadr) {

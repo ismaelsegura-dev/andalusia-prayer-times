@@ -28,7 +28,10 @@ export const getValidatedLunarDate = (
     
     if (diff > 29) {
       // The current date corresponds to the next month, which hasn't been validated yet.
-      return { day: diff - 29 /* roughly */, month: month === 12 ? 1 : month + 1, year: month === 12 ? year + 1 : year, pendingValidation: true };
+      // We cannot determine the exact Hijri day until the Emir validates the month duration.
+      const nextMonth = month === 12 ? 1 : month + 1;
+      const nextYear = month === 12 ? year + 1 : year;
+      return { day: 1, month: nextMonth, year: nextYear, pendingValidation: true };
     }
 
     return { day: diff + 1, month, year, pendingValidation: false };
