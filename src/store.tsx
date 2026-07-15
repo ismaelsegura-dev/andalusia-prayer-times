@@ -16,9 +16,12 @@ interface AppState {
 }
 
 /**
- * DECRETO DEL EMIR — Meses validados hasta 6 Shawwal 1447 (25 marzo 2026)
+ * DECRETO DEL EMIR — Meses validados hasta Muharram 1448
  * Ancla: 1 Shawwal 1447 = 2026-03-20
  * Calculado hacia atrás a razón de 29.53 días/mes lunar
+ * 
+ * ÚLTIMO DECRETO: 15 julio 2026 — El Emir declara 29 días para Dhu al-Hijjah 1447.
+ * Se ha visto la luna. 1 Muharram 1448 = 16 julio 2026.
  */
 const MESES_VALIDADOS_POR_EMIR: Record<string, string> = {
   "1445-09": "2024-03-11", // Ramadán 1445
@@ -48,7 +51,8 @@ const MESES_VALIDADOS_POR_EMIR: Record<string, string> = {
   "1447-09": "2026-02-19", // Ramadán 1447
   "1447-10": "2026-03-20", // Shawwal 1447
   "1447-11": "2026-04-18", // Dhu al-Qi'dah 1447 (30 días)
-  "1447-12": "2026-05-18", // Dhu al-Hijjah 1447 ← último mes validado
+  "1447-12": "2026-05-18", // Dhu al-Hijjah 1447 (29 días — avistamiento 15 jul 2026)
+  "1448-01": "2026-07-16", // Muharram 1448 ← NUEVO: Emir decreta 29 días, luna vista 15/07/2026
 };
 
 export const useStore = create<AppState>()(
