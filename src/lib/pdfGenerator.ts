@@ -16,15 +16,31 @@ export const hexToRgb = (hex: string): [number, number, number] => {
   ] : [0, 0, 0];
 };
 
-/** Helper para cargar imágenes */
-const loadImage = (src: string): Promise<HTMLImageElement> => {
+/** Helper para cargar imágenes como data URL PNG (soporta WebP via canvas) */
+const loadImageAsDataUrl = (src: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('No canvas context')); return; }
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
     img.onerror = reject;
     img.src = src;
   });
+};
+
+/** Dimensiones del logo por ciudad (ancho en mm) */
+const LOGO_WIDTHS: Record<string, number> = {
+  sevilla: 65,
+  granada: 55,
+  barcelona: 55,
+  alcala: 55,
 };
 
 export const generateHighFidelityPDF = async (
@@ -48,20 +64,27 @@ export const generateHighFidelityPDF = async (
 
     const margin = 15;
 
-    // ── 1. LOGO Y ENCABEZADO ──
+    // ─ 1. LOGO Y ENCABEZADO ──
     let y = margin;
 
-    // Cargar y añadir el logo de la mezquita
+    // Cargar y añadir el logo de la mezquita como PNG data URL
     if (city.logo) {
       try {
-        const logoImg = await loadImage(city.logo);
-        const logoW = 50;
-        const logoH = (logoImg.height / logoImg.width) * logoW;
-        doc.addImage(logoImg, 'PNG', w/2 - logoW/2, y, logoW, logoH);
+        const logoDataUrl = await loadImageAsDataUrl(city.logo);
+        const logoW = LOGO_WIDTHS[cityId] ?? 55;
+        // Calcular alto manteniendo proporción
+        const img = await new Promise<HTMLImageElement>((res, rej) => {
+          const i = new Image();
+          i.onload = () => res(i);
+          i.onerror = rej;
+          i.src = logoDataUrl;
+        });
+        const logoH = (img.naturalHeight / img.naturalWidth) * logoW;
+        doc.addImage(logoDataUrl, 'PNG', w / 2 - logoW / 2, y, logoW, logoH);
         y += logoH + 5;
       } catch (e) {
         console.warn('No se pudo cargar el logo:', e);
-        y += 25; // Espacio reservado si no hay logo
+        y += 25;
       }
     } else {
       y += 25;
