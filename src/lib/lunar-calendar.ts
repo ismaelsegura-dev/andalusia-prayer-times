@@ -8,7 +8,9 @@ export const getValidatedLunarDate = (
   let latestStartMs = 0;
 
   for (const [key, startStr] of Object.entries(validatedMonths)) {
-    const startMs = new Date(startStr).getTime();
+    // Normalize to local midnight so the month is picked up from 00:00 local,
+    // not from 00:00 UTC (02:00 in summer)
+    const startMs = new Date(startStr).setHours(0, 0, 0, 0);
     if (startMs <= date.getTime() && startMs >= latestStartMs) {
       latestStartMs = startMs;
       latestStartGregorian = startStr;
@@ -21,10 +23,12 @@ export const getValidatedLunarDate = (
     let year = parseInt(yearStr);
     let month = parseInt(monthStr);
     
-    // Reset time to midnight for accurate day diff
+    // Reset time to midnight for accurate day diff.
+    // Round instead of floor: months crossing a DST change have a 23h day,
+    // and floor would report one hijri day less from that point on.
     const tTarget = new Date(date).setHours(0,0,0,0);
     const tStart = new Date(latestStartGregorian).setHours(0,0,0,0);
-    const diff = Math.floor((tTarget - tStart) / (1000 * 60 * 60 * 24));
+    const diff = Math.round((tTarget - tStart) / (1000 * 60 * 60 * 24));
     
     if (diff > 29) {
       // The current date corresponds to the next month, which hasn't been validated yet.
