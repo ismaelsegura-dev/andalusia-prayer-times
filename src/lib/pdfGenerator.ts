@@ -152,6 +152,12 @@ export const generateHighFidelityPDF = async (
         lineColor: [200, 200, 200],
         lineWidth: 0.1
       },
+      bodyStyles: {
+        fillColor: [240, 240, 240]
+      },
+      alternateRowStyles: {
+        fillColor: [255, 255, 255]
+      },
       columnStyles: {
         0: { fontStyle: 'bold', halign: 'center' },
         1: { halign: 'left' }
