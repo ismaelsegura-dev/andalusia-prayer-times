@@ -71,7 +71,7 @@ export const generateHighFidelityPDF = async (
     if (city.logo) {
       try {
         const logoDataUrl = await loadImageAsDataUrl(city.logo);
-        const logoW = LOGO_WIDTHS[cityId] ?? 55;
+        let logoW = LOGO_WIDTHS[cityId] ?? 55;
         // Calcular alto manteniendo proporción
         const img = await new Promise<HTMLImageElement>((res, rej) => {
           const i = new Image();
@@ -79,7 +79,14 @@ export const generateHighFidelityPDF = async (
           i.onerror = rej;
           i.src = logoDataUrl;
         });
-        const logoH = (img.naturalHeight / img.naturalWidth) * logoW;
+        let logoH = (img.naturalHeight / img.naturalWidth) * logoW;
+        // Tope de alto: logos poco apaisados (Sevilla es 1:1) desplazan la tabla
+        // y el pie se sale del A4
+        const maxLogoH = 25;
+        if (logoH > maxLogoH) {
+          logoW = (img.naturalWidth / img.naturalHeight) * maxLogoH;
+          logoH = maxLogoH;
+        }
         doc.addImage(logoDataUrl, 'PNG', w / 2 - logoW / 2, y, logoW, logoH);
         y += logoH + 5;
       } catch (e) {
@@ -163,7 +170,7 @@ export const generateHighFidelityPDF = async (
       doc.setFontSize(7);
       doc.setTextColor(0, 0, 0);
       doc.text(
-        `Día de observación: [La fecha] (a final de mes, que se sale a ver si hay luna)`,
+        `Día de observación: ${dia29Fecha} (a final de mes, que se sale a ver si hay luna)`,
         w / 2,
         finalY,
         { align: 'center' }
@@ -176,7 +183,7 @@ export const generateHighFidelityPDF = async (
     doc.setFontSize(6);
     doc.setTextColor(80, 80, 80);
     doc.text(
-      `${city.nombre_es} (${city.geo})`,
+      city.geo,
       w / 2,
       finalY,
       { align: 'center' }
