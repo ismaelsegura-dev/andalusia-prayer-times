@@ -119,13 +119,13 @@ export const generateHighFidelityPDF = async (
 
     // ── 2. TABLA DE HORARIOS ──
     const tableBody: (string | number)[][] = [];
-    let dia29Fecha = '';
+    let dia29Date: Date | null = null;
 
     for (let i = 0; i < daysInMonth; i++) {
       const d = addDays(startDate, i);
       const p = calcularHorariosOracion(city.coords.lat, city.coords.lng, city.coords.alt, d, city.maghribOffset).local;
       const fechaStr = format(d, 'EEE dd MMM', { locale: es }).toLowerCase();
-      if (i + 1 === 29) dia29Fecha = fechaStr;
+      if (i + 1 === 29) dia29Date = d;
       tableBody.push([i + 1, fechaStr, p.fajr, p.shuruq, p.dhuhr, p.asr, p.maghrib, p.isha]);
     }
 
@@ -171,12 +171,14 @@ export const generateHighFidelityPDF = async (
     let finalY = (doc as any).lastAutoTable.finalY + 8;
 
     // ── 3. DÍA DE OBSERVACIÓN ──
-    if (dia29Fecha) {
+    if (dia29Date) {
+      const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+      const fechaObs = `${cap(format(dia29Date, 'EEEE d', { locale: es }))} de ${cap(format(dia29Date, 'MMMM', { locale: es }))} de ${format(dia29Date, 'yyyy')}`;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7);
       doc.setTextColor(0, 0, 0);
       doc.text(
-        `Día de observación: ${dia29Fecha} (a final de mes, que se sale a ver si hay luna)`,
+        `Día de observación: ${fechaObs} (a final de mes, que se sale a ver si hay luna)`,
         w / 2,
         finalY,
         { align: 'center' }
