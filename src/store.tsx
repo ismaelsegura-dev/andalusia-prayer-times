@@ -6,6 +6,7 @@ interface AppState {
   setIsAdmin: (isAdmin: boolean) => void;
   validatedMonths: Record<string, string>;
   setValidatedMonth: (key: string, gregorianStart: string) => void;
+  hydrateFromServer: (months: Record<string, string>) => void;
   
   selectedCityId: string;
   setSelectedCityId: (id: string) => void;
@@ -71,6 +72,10 @@ export const useStore = create<AppState>()(
       setValidatedMonth: (key: string, gregorianStart: string) =>
         set((state: AppState) => ({
           validatedMonths: { ...state.validatedMonths, [key]: gregorianStart }
+        })),
+      hydrateFromServer: (months: Record<string, string>) =>
+        set((state: AppState) => ({
+          validatedMonths: { ...state.validatedMonths, ...months }
         })),
 
       selectedCityId: 'granada', 

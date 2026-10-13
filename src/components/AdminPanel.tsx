@@ -3,10 +3,12 @@ import { useStore } from '../store';
 import { HIJRI_MONTHS } from '../lib/lunar-calendar';
 import { format, addDays } from 'date-fns';
 import { sha256, ADMIN_PASSWORD_HASH } from '../lib/hash';
+import { pushValidatedMonth } from '../lib/api';
 
 const AdminPanel: React.FC = () => {
   const { isAdmin, setIsAdmin, validatedMonths, setValidatedMonth } = useStore();
   const [password, setPassword] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -14,6 +16,8 @@ const AdminPanel: React.FC = () => {
     const inputHash = await sha256(password);
     if (inputHash === ADMIN_PASSWORD_HASH) {
       setIsAdmin(true);
+      setAdminPassword(password);
+      setPassword('');
       setError('');
     } else {
       setError('CREDENCIALES INVÁLIDAS');
@@ -69,10 +73,17 @@ const AdminPanel: React.FC = () => {
     }
   }
 
-  const handleValidate = (days: 29 | 30) => {
+  const handleValidate = async (days: 29 | 30) => {
     if (!latestKey) {
-      setValidatedMonth('1445-09', format(new Date(), 'yyyy-MM-dd'));
-      alert('SISTEMA INICIALIZADO EN RAMADÁN 1445.');
+      const key = '1445-09';
+      const start = format(new Date(), 'yyyy-MM-dd');
+      try {
+        await pushValidatedMonth(key, start, adminPassword);
+        setValidatedMonth(key, start);
+        alert('SISTEMA INICIALIZADO EN RAMADÁN 1445.');
+      } catch (err) {
+        alert(`ERROR AL SINCRONIZAR CON EL SERVIDOR: ${(err as Error).message}`);
+      }
       return;
     }
 
@@ -90,8 +101,13 @@ const AdminPanel: React.FC = () => {
     const nextKey = `${nextY}-${nextM.toString().padStart(2, '0')}`;
     const nextStartGregorian = format(addDays(new Date(latestStart), days), 'yyyy-MM-dd');
 
-    setValidatedMonth(nextKey, nextStartGregorian);
-    alert(`LUNA VALIDADA: ${days} DÍAS.\nEL MES ${HIJRI_MONTHS[nextM-1]} COMENZARÁ EL ${nextStartGregorian}.`);
+    try {
+      await pushValidatedMonth(nextKey, nextStartGregorian, adminPassword);
+      setValidatedMonth(nextKey, nextStartGregorian);
+      alert(`LUNA VALIDADA: ${days} DÍAS.\nEL MES ${HIJRI_MONTHS[nextM-1]} COMENZARÁ EL ${nextStartGregorian}.`);
+    } catch (err) {
+      alert(`ERROR AL SINCRONIZAR CON EL SERVIDOR: ${(err as Error).message}\nNO SE HA REGISTRADO LA VALIDACIÓN.`);
+    }
   };
 
   return (
