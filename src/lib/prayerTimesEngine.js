@@ -266,7 +266,13 @@ function calcularHorariosOracion(lat, lng, alt, date, maghribOffset = 0) {
 
   // ── 8. Convertir a hora local usando el offset del sistema ──
   // getTimezoneOffset() devuelve minutos con signo invertido (UTC-hora_local)
-  const offsetHoras = date.getTimezoneOffset() / -60;
+  // El offset se toma a las 12:00 locales del día: en los días de cambio de hora
+  // (madrugada del sábado al domingo) el Date de entrada puede caer antes de la
+  // transición y aplicaría el horario antiguo a todo el día. Al mediodía local
+  // la transición ya ha ocurrido, y todos los rezos del día usan el offset vigente.
+  const mediodiaLocal = new Date(date);
+  mediodiaLocal.setHours(12, 0, 0, 0);
+  const offsetHoras = mediodiaLocal.getTimezoneOffset() / -60;
 
   const aHoraLocal = (horaUTC) => {
     if (horaUTC === null) return null;
