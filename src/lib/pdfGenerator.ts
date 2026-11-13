@@ -103,7 +103,7 @@ export const generateHighFidelityPDF = async (
     doc.setTextColor(0, 0, 0);
     const mesHijri = HIJRI_MONTHS[selectedHijriMonth - 1];
     doc.text(
-      `Parte de los momentos del salah correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h.`,
+      `Parte de los momentos del salat correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h.`,
       w / 2,
       y,
       { align: 'center' }

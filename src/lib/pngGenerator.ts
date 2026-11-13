@@ -97,7 +97,7 @@ export const generatePNG = async (
 
     ctx.fillStyle = '#333333';
     ctx.font = `${9 * SCALE}px Helvetica, Arial, sans-serif`;
-    ctx.fillText(`Parte de los momentos del salah correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)`, W / 2, y);
+    ctx.fillText(`Parte de los momentos del salat correspondiente al mes de ${mesHijri} del año ${selectedHijriYear} h. (${anioGregStr} E.C.)`, W / 2, y);
     y += 14 * SCALE;
     ctx.fillText(`para la ciudad de ${city.nombre_es} y cercanías.`, W / 2, y);
     y += 14 * SCALE;

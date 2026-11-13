@@ -241,7 +241,7 @@ def generar_pdf(ciudad_key: str, output_path: str):
     c = canvas.Canvas(output_path, pagesize=A4)
     c.setTitle(f"Horarios Ramadán 1447h — {m['nombre_es']}")
     c.setAuthor(m.get('fundacion') or f"Mezquita de {m['nombre_es']}")
-    c.setSubject("Horarios de Salah · Ramadān 1447h · 2025/2026")
+    c.setSubject("Horarios de Salat · Ramadān 1447h · 2025/2026")
 
     col_pri = m["col_pri"]
     col_sec = m["col_sec"]
