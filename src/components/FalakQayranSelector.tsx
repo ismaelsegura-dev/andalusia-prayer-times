@@ -15,14 +15,15 @@ const FalakQayranSelector: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
-  // Always detect the current Hijri date on every fresh load
+  // Always detect the current Hijri date on every fresh load, and re-detect it
+  // when validatedMonths changes (the server sync lands after the first mount,
+  // and without this dependency the selector would stay on the stale month)
   React.useEffect(() => {
     const current = getValidatedLunarDate(new Date(), validatedMonths);
     setSelectedHijriMonth(current.month);
     setSelectedHijriYear(current.year);
-  // intentionally empty deps — run once on mount to set today's Hijri date
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [validatedMonths]);
 
   // Current Hijri date — used to lock future months
   const todayHijri = getValidatedLunarDate(new Date(), validatedMonths);

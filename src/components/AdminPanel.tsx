@@ -9,6 +9,7 @@ const AdminPanel: React.FC = () => {
   const { isAdmin, setIsAdmin, validatedMonths, setValidatedMonth } = useStore();
   const [password, setPassword] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -74,39 +75,45 @@ const AdminPanel: React.FC = () => {
   }
 
   const handleValidate = async (days: 29 | 30) => {
-    if (!latestKey) {
-      const key = '1445-09';
-      const start = format(new Date(), 'yyyy-MM-dd');
-      try {
-        await pushValidatedMonth(key, start, adminPassword);
-        setValidatedMonth(key, start);
-        alert('SISTEMA INICIALIZADO EN RAMADÁN 1445.');
-      } catch (err) {
-        alert(`ERROR AL SINCRONIZAR CON EL SERVIDOR: ${(err as Error).message}`);
-      }
-      return;
-    }
-
-    const [yStr, mStr] = latestKey.split('-');
-    let y = parseInt(yStr);
-    let m = parseInt(mStr);
-    
-    let nextM = m + 1;
-    let nextY = y;
-    if (nextM > 12) {
-      nextM = 1;
-      nextY = y + 1;
-    }
-
-    const nextKey = `${nextY}-${nextM.toString().padStart(2, '0')}`;
-    const nextStartGregorian = format(addDays(new Date(latestStart), days), 'yyyy-MM-dd');
-
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      await pushValidatedMonth(nextKey, nextStartGregorian, adminPassword);
-      setValidatedMonth(nextKey, nextStartGregorian);
-      alert(`LUNA VALIDADA: ${days} DÍAS.\nEL MES ${HIJRI_MONTHS[nextM-1]} COMENZARÁ EL ${nextStartGregorian}.`);
-    } catch (err) {
-      alert(`ERROR AL SINCRONIZAR CON EL SERVIDOR: ${(err as Error).message}\nNO SE HA REGISTRADO LA VALIDACIÓN.`);
+      if (!latestKey) {
+        const key = '1445-09';
+        const start = format(new Date(), 'yyyy-MM-dd');
+        try {
+          await pushValidatedMonth(key, start, adminPassword);
+          setValidatedMonth(key, start);
+          alert('SISTEMA INICIALIZADO EN RAMADÁN 1445.');
+        } catch (err) {
+          alert(`ERROR AL SINCRONIZAR CON EL SERVIDOR: ${(err as Error).message}`);
+        }
+        return;
+      }
+
+      const [yStr, mStr] = latestKey.split('-');
+      let y = parseInt(yStr);
+      let m = parseInt(mStr);
+      
+      let nextM = m + 1;
+      let nextY = y;
+      if (nextM > 12) {
+        nextM = 1;
+        nextY = y + 1;
+      }
+
+      const nextKey = `${nextY}-${nextM.toString().padStart(2, '0')}`;
+      const nextStartGregorian = format(addDays(new Date(latestStart), days), 'yyyy-MM-dd');
+
+      try {
+        await pushValidatedMonth(nextKey, nextStartGregorian, adminPassword);
+        setValidatedMonth(nextKey, nextStartGregorian);
+        alert(`LUNA VALIDADA: ${days} DÍAS.\nEL MES ${HIJRI_MONTHS[nextM-1]} COMENZARÁ EL ${nextStartGregorian}.`);
+      } catch (err) {
+        alert(`ERROR AL SINCRONIZAR CON EL SERVIDOR: ${(err as Error).message}\nNO SE HA REGISTRADO LA VALIDACIÓN.`);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -164,18 +171,20 @@ const AdminPanel: React.FC = () => {
           <div className="flex flex-col sm:flex-row flex-1">
             <button 
               onClick={() => latestKey ? handleValidate(29) : handleValidate(30)}
-              className="flex-1 p-6 font-mono font-bold text-sm uppercase tracking-widest border-b-2 sm:border-b-0 sm:border-r-2 border-black hover:bg-black hover:text-white transition-colors flex flex-col items-center justify-center gap-2"
+              disabled={isSubmitting}
+              className="flex-1 p-6 font-mono font-bold text-sm uppercase tracking-widest border-b-2 sm:border-b-0 sm:border-r-2 border-black hover:bg-black hover:text-white transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="text-4xl font-serif">29</span>
-              <span className="text-[10px]">{latestKey ? 'Tuvo 29 días' : 'INICIALIZAR'}</span>
+              <span className="text-[10px]">{isSubmitting ? 'ENVIANDO...' : latestKey ? 'Tuvo 29 días' : 'INICIALIZAR'}</span>
             </button>
             {latestKey && (
               <button 
                 onClick={() => handleValidate(30)}
-                className="flex-1 p-6 font-mono font-bold text-sm uppercase tracking-widest hover:bg-black hover:text-white transition-colors flex flex-col items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="flex-1 p-6 font-mono font-bold text-sm uppercase tracking-widest hover:bg-black hover:text-white transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-4xl font-serif">30</span>
-                <span className="text-[10px]">Tuvo 30 días</span>
+                <span className="text-[10px]">{isSubmitting ? 'ENVIANDO...' : 'Tuvo 30 días'}</span>
               </button>
             )}
           </div>

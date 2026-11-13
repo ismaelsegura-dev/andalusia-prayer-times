@@ -6,6 +6,12 @@ import { syncMonthsFromServer } from './lib/api';
 
 syncMonthsFromServer();
 
+// Re-sincroniza al volver a la app: los decretos del emir llegan
+// aunque el usuario tenga la PWA abierta desde antes
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncMonthsFromServer();
+});
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <App />
