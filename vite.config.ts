@@ -2,8 +2,22 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { execSync } from 'child_process';
+
+const commitHash = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'dev';
+  }
+})();
 
 export default defineConfig({
+  define: {
+    __APP_BUILD__: JSON.stringify(
+      `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC · ${commitHash}`
+    ),
+  },
   plugins: [
     tailwindcss(),
     react(),

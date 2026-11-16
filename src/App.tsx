@@ -55,6 +55,9 @@ const AppContent = () => {
         <p className="font-mono text-xs text-center uppercase tracking-widest font-bold">
           {new Date().getFullYear()} // DIRECTORIO RELIGIOSO INDEPENDIENTE
         </p>
+        <p className="font-mono text-[10px] text-center uppercase tracking-widest text-gray-500 mt-2">
+          BUILD {__APP_BUILD__}
+        </p>
       </footer>
     </div>
   );
